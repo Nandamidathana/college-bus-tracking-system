@@ -445,7 +445,11 @@ export const StudentDashboard: React.FC = () => {
           ? (lastVillageStop ? `${lastVillageStop.name} (Terminus)` : (student?.boardingPoint?.name ? `${student.boardingPoint.name} (Terminus)` : 'Gudivada Bus Stand (Terminus)'))
           : (user?.college?.name ? `${user.college.name} Gate` : 'SRGEC College Gate'));
 
-  const destinationLat =
+  const isCoordInAP = (lat?: number, lng?: number) => {
+    return lat !== undefined && lng !== undefined && lat >= 13.0 && lat <= 19.5 && lng >= 76.5 && lng <= 85.0;
+  };
+
+  const rawDestLat =
     (isReturnTrip && liveLocation?.destinationLat && Math.abs(liveLocation.destinationLat - (user?.college?.latitude || 16.35068)) > 0.005)
       ? liveLocation.destinationLat
       : (activeTrip?.destinationLat && Math.abs(activeTrip.destinationLat - (user?.college?.latitude || 16.35068)) > 0.005)
@@ -454,7 +458,7 @@ export const StudentDashboard: React.FC = () => {
           ? (lastVillageStop?.latitude || student?.boardingPoint?.latitude || 16.431025)
           : (user?.college?.latitude || 16.35068));
 
-  const destinationLng =
+  const rawDestLng =
     (isReturnTrip && liveLocation?.destinationLng && Math.abs(liveLocation.destinationLng - (user?.college?.longitude || 81.04273)) > 0.005)
       ? liveLocation.destinationLng
       : (activeTrip?.destinationLng && Math.abs(activeTrip.destinationLng - (user?.college?.longitude || 81.04273)) > 0.005)
@@ -462,6 +466,9 @@ export const StudentDashboard: React.FC = () => {
       : (isReturnTrip
           ? (lastVillageStop?.longitude || student?.boardingPoint?.longitude || 80.997348)
           : (user?.college?.longitude || 81.04273));
+
+  const destinationLat = isCoordInAP(rawDestLat, rawDestLng) ? rawDestLat : (user?.college?.latitude || 16.35068);
+  const destinationLng = isCoordInAP(rawDestLat, rawDestLng) ? rawDestLng : (user?.college?.longitude || 81.04273);
 
   const nextStopName = liveLocation?.nextStopName || busData?.nextStopName || null;
   const destinationDistance = liveLocation?.destinationDistance || busData?.destinationDistance || null;

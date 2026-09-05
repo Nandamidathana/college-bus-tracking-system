@@ -10,9 +10,10 @@ export async function searchLocation(query: string): Promise<GeocodeResult[]> {
   if (!query || query.trim().length < 2) return [];
 
   try {
+    // Prioritize Andhra Pradesh & India bounds to avoid cross-country results
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
       query.trim()
-    )}&limit=5&addressdetails=1`;
+    )}&countrycodes=in&viewbox=79.5,17.5,82.2,15.5&bounded=0&limit=7&addressdetails=1`;
 
     const response = await fetch(url, {
       headers: {
