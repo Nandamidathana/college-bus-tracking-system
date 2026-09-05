@@ -1,11 +1,27 @@
 import axios from 'axios';
 
-const getApiBaseUrl = (): string => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
+export const getApiBaseUrl = (): string => {
+  let custom = '';
+  if (typeof window !== 'undefined') {
+    custom = localStorage.getItem('bus_tracker_backend_url') || '';
   }
-  // Use relative '/api' so Vite proxy forwards to localhost:5000 seamlessly across LAN/Mobile
+
+  let raw = custom || import.meta.env.VITE_API_BASE_URL || '';
+  if (raw) {
+    return raw.trim().replace(/\/+$/, '');
+  }
+
   return '/api';
+};
+
+export const setCustomBackendUrl = (url: string) => {
+  if (typeof window !== 'undefined') {
+    if (!url) {
+      localStorage.removeItem('bus_tracker_backend_url');
+    } else {
+      localStorage.setItem('bus_tracker_backend_url', url.trim().replace(/\/+$/, ''));
+    }
+  }
 };
 
 export const api = axios.create({

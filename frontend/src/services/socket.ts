@@ -1,10 +1,17 @@
 import { io, Socket } from 'socket.io-client';
 
-const getSocketUrl = (): string => {
-  if (import.meta.env.VITE_SOCKET_URL) {
-    return import.meta.env.VITE_SOCKET_URL;
-  }
+export const getSocketUrl = (): string => {
+  let custom = '';
   if (typeof window !== 'undefined') {
+    custom = localStorage.getItem('bus_tracker_backend_url') || '';
+  }
+
+  let raw = custom || import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_BASE_URL || '';
+  if (raw) {
+    return raw.trim().replace(/\/api\/?$/, '').replace(/\/+$/, '');
+  }
+
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
     return window.location.origin;
   }
   return 'http://localhost:5000';

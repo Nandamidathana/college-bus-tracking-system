@@ -32,8 +32,8 @@ app.use(cors({ origin: ENV.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health Check
-app.get('/api/health', (_req: express.Request, res: express.Response) => {
+// Health Check (Supports both /health and /api/health)
+app.get(['/health', '/api/health'], (_req: express.Request, res: express.Response) => {
   res.json({
     status: 'ok',
     service: 'College Bus Live Tracking Server',
@@ -41,11 +41,16 @@ app.get('/api/health', (_req: express.Request, res: express.Response) => {
   });
 });
 
-// API Routes
+// API Routes (Mounted on both /api/* and root /* for universal client URL compatibility)
 app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/admin', adminRoutes);
+
+app.use('/auth', authRoutes);
+app.use('/student', studentRoutes);
+app.use('/driver', driverRoutes);
+app.use('/admin', adminRoutes);
 
 // Setup Socket.IO Event Handlers
 setupWebSocket(io);
