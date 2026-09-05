@@ -1,0 +1,12 @@
+{
+  "name": "college-bus-tracker-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-Ready Real-time College Bus Live Tracking Platform",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "db:seed": "npm --prefix backend run seed",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build"
+  }
+}

@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model College {
+  id             String   @id @default(cuid())
+  name           String
+  code           String   @unique
+  latitude       Float
+  longitude      Float
+  address        String
+  reportingTime  String   @default("09:00")
+  geofenceRadius Float    @default(100.0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  users       User[]
+  students    Student[]
+  drivers     Driver[]
+  buses       Bus[]
+  routes      Route[]
+  trips       Trip[]
+  busArrivals BusArrival[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String?  @unique
+  phone        String?
+  passwordHash String
+  role         String   @default("STUDENT") // STUDENT, DRIVER, ADMIN
+  collegeId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  college College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  student Student?
+  driver  Driver?
+}
+
+model Student {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  rollNumber      String
+  village         String
+  boardingPointId String
+  routeId         String
+  collegeId       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  college       College       @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  route         Route         @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  boardingPoint BoardingPoint @relation(fields: [boardingPointId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@unique([collegeId, rollNumber])
+}
+
+model Driver {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  driverName     String
+  phone          String?
+  collegeId      String
+  assignedBusId  String?
+  status         String   @default("AVAILABLE") // AVAILABLE, ON_TRIP, OFFLINE
+  approvalStatus String   @default("PENDING")   // PENDING, APPROVED, REJECTED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  college       College        @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  assignedBus   Bus?           @relation("DriverAssignedBus", fields: [assignedBusId], references: [id], onDelete: SetNull)
+  busesDriven   Bus[]          @relation("BusDriver")
+  trips         Trip[]
+  liveLocations LiveLocation[]
+  busArrivals   BusArrival[]
+}
+
+model Bus {
+  id               String   @id @default(cuid())
+  busNumber        String
+  capacity         Int      @default(40)
+  collegeId        String
+  routeId          String?
+  assignedDriverId String?
+  status           String   @default("INACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  college           College           @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  route             Route?            @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  assignedDriver    Driver?           @relation("BusDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  driversAssignedTo Driver[]          @relation("DriverAssignedBus")
+  trips             Trip[]
+  liveLocation      LiveLocation?
+  locationHistories LocationHistory[]
+  busArrivals       BusArrival[]
+
+  @@unique([collegeId, busNumber])
+}
+
+model Route {
+  id                   String   @id @default(cuid())
+  name                 String
+  routeNumber          String
+  collegeId            String
+  destinationCollegeId String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  college        College         @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  buses          Bus[]
+  boardingPoints BoardingPoint[]
+  students       Student[]
+
+  @@unique([collegeId, routeNumber])
+}
+
+model BoardingPoint {
+  id        String   @id @default(cuid())
+  name      String
+  latitude  Float
+  longitude Float
+  routeId   String
+  sequence  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  route    Route     @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  students Student[]
+}
+
+model Trip {
+  id                String    @id @default(cuid())
+  busId             String
+  driverId          String
+  collegeId         String
+  tripType          String    @default("MORNING_PICKUP") // MORNING_PICKUP, EVENING_RETURN
+  originName        String?
+  destinationName   String?
+  destinationLat    Float?
+  destinationLng    Float?
+  finalStopId       String?
+  startTime         DateTime  @default(now())
+  endTime           DateTime?
+  status            String    @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
+  arrivalTime       DateTime?
+  arrivalStatus     String?   // ON_TIME, DELAYED
+  delayMinutes      Int       @default(0)
+  isDelayedNotified Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  bus               Bus               @relation(fields: [busId], references: [id], onDelete: Cascade)
+  driver            Driver            @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  college           College           @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  liveLocations     LiveLocation[]
+  locationHistories LocationHistory[]
+  notifications     Notification[]
+  busArrival        BusArrival?
+}
+
+model LiveLocation {
+  busId     String   @id
+  tripId    String
+  driverId  String
+  latitude  Float
+  longitude Float
+  accuracy  Float    @default(5.0)
+  speed     Float    @default(0.0)
+  heading   Float    @default(0.0)
+  timestamp DateTime @default(now())
+  isStale   Boolean  @default(false)
+
+  bus    Bus    @relation(fields: [busId], references: [id], onDelete: Cascade)
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+}
+
+model LocationHistory {
+  id        String   @id @default(cuid())
+  busId     String
+  tripId    String
+  latitude  Float
+  longitude Float
+  accuracy  Float    @default(5.0)
+  speed     Float    @default(0.0)
+  heading   Float    @default(0.0)
+  timestamp DateTime @default(now())
+
+  bus  Bus  @relation(fields: [busId], references: [id], onDelete: Cascade)
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  studentId String
+  tripId    String
+  type      String   @default("APPROACHING_2KM") // APPROACHING_2KM, TRIP_STARTED, TRIP_ENDED
+  message   String
+  sentAt    DateTime @default(now())
+  status    String   @default("SENT")
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  trip    Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, tripId, type])
+}
+
+model BusArrival {
+  id                String   @id @default(cuid())
+  tripId            String   @unique
+  busId             String
+  driverId          String
+  collegeId         String
+  routeId           String?
+  date              String   // YYYY-MM-DD
+  arrivalTime       DateTime @default(now())
+  reportingTime     String   @default("09:00")
+  status            String   // ON_TIME, DELAYED
+  delayMinutes      Int      @default(0)
+  distanceAtArrival Float    @default(0.0)
+  createdAt         DateTime @default(now())
+
+  trip    Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  bus     Bus     @relation(fields: [busId], references: [id], onDelete: Cascade)
+  driver  Driver  @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  college College @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+}

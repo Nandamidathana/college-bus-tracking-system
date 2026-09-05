@@ -1,0 +1,18 @@
+{
+  "short_name": "SRGEC Bus",
+  "name": "SRGEC Live College Bus Tracker",
+  "icons": [
+    {
+      "src": "/bus-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512 any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#0284c7",
+  "display": "standalone",
+  "orientation": "portrait",
+  "categories": ["education", "navigation", "utilities"],
+  "description": "Real-time Live GPS College Bus Tracking & Road Navigation for SRGEC Students & Faculty"
+}
