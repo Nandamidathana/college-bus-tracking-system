@@ -59,13 +59,18 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   res.status(500).json({ error: 'Internal server error occurred.' });
 });
 
+import { bootstrapDatabase } from './services/bootstrap.service';
+
 // Start listening
-server.listen(ENV.PORT, '0.0.0.0', () => {
+server.listen(ENV.PORT, '0.0.0.0', async () => {
   console.log(`=======================================================`);
   console.log(`🚌 College Bus Tracker Server running on port ${ENV.PORT} (0.0.0.0)`);
   console.log(`📡 Socket.IO Realtime Engine active`);
   console.log(`🌍 Environment: ${ENV.NODE_ENV}`);
   console.log(`=======================================================`);
+
+  // Auto-initialize default College, Admin, Student, and Driver credentials
+  await bootstrapDatabase();
 });
 
 // Graceful shutdown
