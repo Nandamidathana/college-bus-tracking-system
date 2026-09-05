@@ -6,13 +6,17 @@ import { College } from '../../types';
 import { Navbar } from '../../components/common/Navbar';
 import { Navigation, School, Bus, KeyRound, ArrowRight, AlertCircle } from 'lucide-react';
 
+const DEFAULT_AP_COLLEGES = [
+  { id: 'cmtlrqxgq0000v620e5otz0gg', name: 'Seshadri Rao Gudlavalleru Engineering College (SRGEC)', code: 'SRGEC' },
+];
+
 export const DriverRegister: React.FC = () => {
   const [driverName, setDriverName] = useState('');
-  const [collegeId, setCollegeId] = useState('');
+  const [collegeId, setCollegeId] = useState(DEFAULT_AP_COLLEGES[0].id);
   const [busNumber, setBusNumber] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [colleges, setColleges] = useState<College[]>([]);
+  const [colleges, setColleges] = useState<any[]>(DEFAULT_AP_COLLEGES);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -27,27 +31,28 @@ export const DriverRegister: React.FC = () => {
           setCollegeId(res.data.colleges[0].id);
         }
       })
-      .catch((err) => console.error('Failed to load colleges:', err));
+      .catch((err) => console.warn('Backend colleges fetch fallback:', err));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 4) {
+      setError('Password / PIN must be at least 4 characters.');
       return;
     }
 
     setLoading(true);
 
     try {
+      const finalCollege = collegeId || colleges[0]?.id || DEFAULT_AP_COLLEGES[0].id;
       const payload: any = {
         driverName: driverName.trim(),
-        busNumber: busNumber.trim().toUpperCase(),
+        busNumber: (busNumber || '01').trim().toUpperCase(),
         phone: phone.trim(),
         password,
-        collegeId: collegeId || colleges[0]?.id,
+        collegeId: finalCollege,
       };
 
       const res = await authApi.driverRegister(payload);
@@ -57,7 +62,8 @@ export const DriverRegister: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Driver registration failed:', err);
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      const serverErr = err.response?.data?.error || err.response?.data?.message || err.message;
+      setError(serverErr || 'Registration failed. Please check your details.');
     } finally {
       setLoading(false);
     }

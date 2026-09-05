@@ -5,10 +5,65 @@ import { generateToken } from '../middleware/auth';
 
 const router = Router();
 
+// Helper: Get or Auto-Seed Default College
+async function getOrCreateDefaultCollege() {
+  let college = await prisma.college.findFirst({
+    include: {
+      routes: {
+        include: {
+          boardingPoints: { orderBy: { sequence: 'asc' } },
+        },
+      },
+      buses: true,
+    },
+  });
+
+  if (!college) {
+    college = await prisma.college.create({
+      data: {
+        name: 'Seshadri Rao Gudlavalleru Engineering College (SRGEC)',
+        code: 'SRGEC',
+        latitude: 16.35068,
+        longitude: 81.04273,
+        address: 'Gudlavalleru, Krishna District, Andhra Pradesh - 521356',
+        reportingTime: '09:00',
+        routes: {
+          create: [
+            {
+              name: 'Campus Express Route 1',
+              routeNumber: 'ROUTE-01',
+              boardingPoints: {
+                create: [
+                  { name: 'Gudivada Bus Stand', latitude: 16.43304, longitude: 80.99369, sequence: 1 },
+                  { name: 'SRGEC Main Campus', latitude: 16.35068, longitude: 81.04273, sequence: 2 },
+                ],
+              },
+            },
+          ],
+        },
+        buses: {
+          create: [
+            { busNumber: 'AP16AB1001', status: 'INACTIVE' },
+          ],
+        },
+      },
+      include: {
+        routes: {
+          include: {
+            boardingPoints: { orderBy: { sequence: 'asc' } },
+          },
+        },
+        buses: true,
+      },
+    });
+  }
+  return college;
+}
+
 // GET /api/auth/colleges - Public endpoint for college selection
 router.get('/colleges', async (_req: Request, res: Response) => {
   try {
-    const colleges = await prisma.college.findMany({
+    let colleges = await prisma.college.findMany({
       select: {
         id: true,
         name: true,
@@ -42,6 +97,12 @@ router.get('/colleges', async (_req: Request, res: Response) => {
         },
       },
     });
+
+    if (!colleges || colleges.length === 0) {
+      const defaultCol = await getOrCreateDefaultCollege();
+      colleges = [defaultCol as any];
+    }
+
     return res.json({ success: true, colleges });
   } catch (error) {
     console.error('Error fetching colleges:', error);
@@ -166,28 +227,31 @@ router.post('/student/register', async (req: Request, res: Response) => {
       finalCollegeId = newCollege.id;
     }
 
-    // Verify college exists
-    const college = await prisma.college.findUnique({
-      where: { id: finalCollegeId },
-      include: { routes: { include: { boardingPoints: true } } },
-    });
+    // Verify college exists or fallback to default
+    let college = finalCollegeId
+      ? await prisma.college.findUnique({
+          where: { id: finalCollegeId },
+          include: { routes: { include: { boardingPoints: true } } },
+        })
+      : null;
 
     if (!college) {
-      return res.status(404).json({ error: 'Selected college not found.' });
+      college = await getOrCreateDefaultCollege();
+      finalCollegeId = college.id;
     }
 
-    // Check if roll number already registered for this college
-    const existingStudent = await prisma.student.findUnique({
+    // Check if roll number already registered
+    const cleanRoll = rollNumber.trim().toUpperCase();
+    const existingStudent = await prisma.student.findFirst({
       where: {
-        collegeId_rollNumber: {
-          collegeId: finalCollegeId,
-          rollNumber: rollNumber.trim().toUpperCase(),
-        },
+        rollNumber: cleanRoll,
       },
     });
 
     if (existingStudent) {
-      return res.status(400).json({ error: 'A student with this Roll Number is already registered in this college.' });
+      return res.status(400).json({
+        error: `Roll Number '${cleanRoll}' is already registered. Please Sign In or use Forgot PIN.`,
+      });
     }
 
     let finalRouteId = routeId;
@@ -381,9 +445,25 @@ router.post('/driver/register', async (req: Request, res: Response) => {
       finalCollegeId = newCollege.id;
     }
 
-    const college = await prisma.college.findUnique({ where: { id: finalCollegeId } });
+    let college = finalCollegeId
+      ? await prisma.college.findUnique({ where: { id: finalCollegeId } })
+      : null;
+
     if (!college) {
-      return res.status(404).json({ error: 'Selected college not found.' });
+      college = await getOrCreateDefaultCollege();
+      finalCollegeId = college.id;
+    }
+
+    // Check if phone or driver already exists
+    if (phone) {
+      const existingUserPhone = await prisma.user.findFirst({
+        where: { phone: phone.trim() },
+      });
+      if (existingUserPhone) {
+        return res.status(400).json({
+          error: `A driver with phone '${phone.trim()}' is already registered. Please Sign In or use Forgot PIN.`,
+        });
+      }
     }
 
     // Find or create bus for this college if busNumber is specified

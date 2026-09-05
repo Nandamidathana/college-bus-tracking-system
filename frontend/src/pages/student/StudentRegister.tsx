@@ -13,17 +13,21 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+const DEFAULT_AP_COLLEGES = [
+  { id: 'cmtlrqxgq0000v620e5otz0gg', name: 'Seshadri Rao Gudlavalleru Engineering College (SRGEC)', code: 'SRGEC', latitude: 16.35068, longitude: 81.04273 },
+];
+
 export const StudentRegister: React.FC = () => {
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
-  const [selectedCollegeId, setSelectedCollegeId] = useState('');
+  const [selectedCollegeId, setSelectedCollegeId] = useState(DEFAULT_AP_COLLEGES[0].id);
   const [boardingLocation, setBoardingLocation] = useState('');
   const [boardingLat, setBoardingLat] = useState<number | string>('');
   const [boardingLng, setBoardingLng] = useState<number | string>('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [colleges, setColleges] = useState<any[]>([]);
+  const [colleges, setColleges] = useState<any[]>(DEFAULT_AP_COLLEGES);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -38,11 +42,11 @@ export const StudentRegister: React.FC = () => {
           setSelectedCollegeId(res.data.colleges[0].id);
         }
       })
-      .catch((err) => console.error('Failed to load colleges:', err));
+      .catch((err) => console.warn('Backend colleges fetch fallback:', err));
   }, []);
 
   const selectedCollegeObj = useMemo(
-    () => colleges.find((c) => c.id === selectedCollegeId) || colleges[0] || null,
+    () => colleges.find((c) => c.id === selectedCollegeId) || colleges[0] || DEFAULT_AP_COLLEGES[0],
     [colleges, selectedCollegeId]
   );
 
@@ -56,30 +60,26 @@ export const StudentRegister: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    if (!selectedCollegeId) {
-      setError('Please select your college.');
-      return;
-    }
-
     if (password !== confirmPassword) {
       setError('Passwords do not match. Please verify.');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 4) {
+      setError('Password / PIN must be at least 4 characters.');
       return;
     }
 
     setLoading(true);
 
     try {
+      const finalCollege = selectedCollegeId || colleges[0]?.id || DEFAULT_AP_COLLEGES[0].id;
       const payload: any = {
         name: name.trim(),
         rollNumber: rollNumber.trim().toUpperCase(),
-        collegeId: selectedCollegeId,
-        village: boardingLocation.trim(),
-        boardingPointName: boardingLocation.trim(),
+        collegeId: finalCollege,
+        village: boardingLocation.trim() || 'Gudivada Bus Stand',
+        boardingPointName: boardingLocation.trim() || 'Gudivada Bus Stand',
         latitude: boardingLat !== '' ? parseFloat(String(boardingLat)) : (selectedCollegeObj?.latitude || 16.35068),
         longitude: boardingLng !== '' ? parseFloat(String(boardingLng)) : (selectedCollegeObj?.longitude || 81.04273),
         password,
