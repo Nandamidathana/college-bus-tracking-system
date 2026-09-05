@@ -33,7 +33,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health Check
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', (_req: express.Request, res: express.Response) => {
   res.json({
     status: 'ok',
     service: 'College Bus Live Tracking Server',
