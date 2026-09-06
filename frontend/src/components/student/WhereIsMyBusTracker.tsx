@@ -154,9 +154,33 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
     // If bus is between stops, determine if passed or approaching
     return stops.map((s, idx) => {
       const d = getDistanceMeters(busLat, busLng, s.latitude, s.longitude);
-      const isStudentStop =
-        (studentBoardingPoint?.id && studentBoardingPoint.id === s.id) ||
-        (studentBoardingPoint?.name && studentBoardingPoint.name.toLowerCase() === s.name.toLowerCase());
+
+      let isStudentStop = false;
+      if (studentBoardingPoint) {
+        if (studentBoardingPoint.id && studentBoardingPoint.id === s.id) {
+          isStudentStop = true;
+        } else {
+          const bpName = (studentBoardingPoint.name || '').toLowerCase().trim();
+          const sName = (s.name || '').toLowerCase().trim();
+          if (bpName && sName) {
+            if (bpName === sName || bpName.includes(sName) || sName.includes(bpName)) {
+              isStudentStop = true;
+            } else {
+              const bpWords = bpName.split(/[\s,/-]+/);
+              const sWords = sName.split(/[\s,/-]+/);
+              if (sWords.some((w) => w.length >= 4 && bpWords.includes(w))) {
+                isStudentStop = true;
+              }
+            }
+          }
+          if (!isStudentStop && studentBoardingPoint.latitude && studentBoardingPoint.longitude && s.latitude && s.longitude) {
+            const dist = getDistanceMeters(studentBoardingPoint.latitude, studentBoardingPoint.longitude, s.latitude, s.longitude);
+            if (dist <= 900) {
+              isStudentStop = true;
+            }
+          }
+        }
+      }
 
       const isPassed = idx < closestIndex || (idx === closestIndex && d <= 350 && closestIndex < stops.length - 1 && d < 100);
       const isCurrentNext = idx === closestIndex || (!isPassed && idx === closestIndex + 1);
@@ -196,13 +220,18 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
               🚉
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-300">
                   Where Is My Bus • Live Station Radar
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono">
                   Bus #{busNumber}
                 </span>
+                {!studentStopTelemetry && studentBoardingPoint && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                    Off-Route Bus
+                  </span>
+                )}
               </div>
               <h2 className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
                 {route?.name || 'Campus Transit Route'}
@@ -227,6 +256,19 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
             )}
           </div>
         </div>
+
+        {/* Off-Route Notice Banner */}
+        {!studentStopTelemetry && studentBoardingPoint && (
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-amber-200 text-xs font-bold flex items-center gap-3 shadow-md">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+            <div className="flex-1">
+              <span className="text-amber-300 font-extrabold uppercase tracking-wide mr-1">Off-Route Notice:</span>
+              <span>
+                Bus <strong className="text-white">#{busNumber}</strong> operates on <strong className="text-white">{route?.name || 'this route'}</strong> and does <strong className="text-rose-400 underline uppercase font-black">not</strong> pass through your boarding stop (<strong className="text-cyan-300">{studentBoardingPoint.name}</strong>). Showing this bus's full route progression.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* 2 KM Readiness Alert Banner */}
         {isWithin2km && (
@@ -263,7 +305,9 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
             </div>
 
             <div className="p-3 bg-slate-50 dark:bg-slate-900/70 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
-              <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block">Your Stop Distance</span>
+              <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block">
+                {studentStopTelemetry ? 'Your Stop Distance' : 'Bus Route Distance'}
+              </span>
               <span className="text-base font-black text-blue-700 dark:text-cyan-300 mt-0.5 block truncate">
                 {studentStopTelemetry ? studentStopTelemetry.distanceKm : displayDistance}
               </span>

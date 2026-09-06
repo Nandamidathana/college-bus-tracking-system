@@ -184,7 +184,11 @@ router.get('/buses', async (req: Request, res: Response) => {
     const buses = await prisma.bus.findMany({
       where: { collegeId },
       include: {
-        route: true,
+        route: {
+          include: {
+            boardingPoints: { orderBy: { sequence: 'asc' } },
+          },
+        },
         assignedDriver: { select: { driverName: true, phone: true } },
         liveLocation: true,
         trips: {

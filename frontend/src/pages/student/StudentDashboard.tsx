@@ -76,9 +76,60 @@ export const StudentDashboard: React.FC = () => {
 
   const student = user?.student;
   const boardingPoint = student?.boardingPoint;
+
+  // Helper: Check if a bus serves the student's designated boarding point
+  const checkBusServesBoardingStop = (bus?: Bus | null, studentBp?: BoardingPoint | null): boolean => {
+    if (!bus || !studentBp) return true;
+    const stops = bus.route?.boardingPoints || [];
+    if (stops.length === 0) return true;
+
+    const bpName = (studentBp.name || '').toLowerCase().trim();
+    const bpLat = studentBp.latitude;
+    const bpLng = studentBp.longitude;
+
+    return stops.some((s) => {
+      if (s.id && studentBp.id && s.id === studentBp.id) return true;
+
+      const sName = (s.name || '').toLowerCase().trim();
+      if (sName && bpName) {
+        if (sName === bpName || sName.includes(bpName) || bpName.includes(sName)) return true;
+        const sWords = sName.split(/[\s,/-]+/);
+        const bpWords = bpName.split(/[\s,/-]+/);
+        if (sWords.some((w) => w.length >= 4 && bpWords.includes(w))) return true;
+      }
+
+      if (bpLat && bpLng && s.latitude && s.longitude) {
+        // Approximate Haversine in meters
+        const R = 6371e3;
+        const φ1 = (bpLat * Math.PI) / 180;
+        const φ2 = (s.latitude * Math.PI) / 180;
+        const Δφ = ((s.latitude - bpLat) * Math.PI) / 180;
+        const Δλ = ((s.longitude - bpLng) * Math.PI) / 180;
+        const a =
+          Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+          Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        if (R * c <= 900) return true;
+      }
+      return false;
+    });
+  };
+
   const selectedBus = useMemo(
     () => buses.find((b) => b.id === selectedBusId) || buses[0] || null,
     [buses, selectedBusId]
+  );
+
+  // Check whether the currently selected bus serves the student's stop
+  const isBusServingStudentStop = useMemo(
+    () => checkBusServesBoardingStop(selectedBus, boardingPoint),
+    [selectedBus, boardingPoint]
+  );
+
+  // Find all buses in the fleet that DO pass through this student's boarding point
+  const preferredBuses = useMemo(
+    () => buses.filter((b) => checkBusServesBoardingStop(b, boardingPoint)),
+    [buses, boardingPoint]
   );
 
   // 1. Continuous Watch for Student's Own Live Hardware GPS (Real-time GNSS)
@@ -103,7 +154,7 @@ export const StudentDashboard: React.FC = () => {
   }, []);
 
 
-  // 2. Fetch all available buses in college
+  // 2. Fetch all available buses in college & select student's matching bus by default
   useEffect(() => {
     const fetchBuses = async () => {
       try {
@@ -112,7 +163,11 @@ export const StudentDashboard: React.FC = () => {
         if (res.data.success && res.data.buses.length > 0) {
           setBuses(res.data.buses);
           if (!selectedBusId) {
-            setSelectedBusId(res.data.buses[0].id);
+            // Pick a bus that serves the student's boarding stop first
+            const matchingBus = res.data.buses.find((b: Bus) =>
+              checkBusServesBoardingStop(b, boardingPoint)
+            );
+            setSelectedBusId(matchingBus ? matchingBus.id : res.data.buses[0].id);
           }
         }
       } catch (err) {
@@ -122,7 +177,7 @@ export const StudentDashboard: React.FC = () => {
       }
     };
     fetchBuses();
-  }, []);
+  }, [boardingPoint]);
 
   // 3. Fetch live bus status & coordinates
   const fetchBusStatus = async (busId: string) => {
@@ -340,7 +395,7 @@ export const StudentDashboard: React.FC = () => {
   const bpLng = boardingPoint?.longitude;
 
   const distanceBusToBoardingMeters = useMemo(() => {
-    if (!busLat || !busLng || !bpLat || !bpLng) return null;
+    if (!isBusServingStudentStop || !busLat || !busLng || !bpLat || !bpLng) return null;
     const R = 6371e3; // metres
     const φ1 = (busLat * Math.PI) / 180;
     const φ2 = (bpLat * Math.PI) / 180;
@@ -352,7 +407,7 @@ export const StudentDashboard: React.FC = () => {
       Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return Math.round(R * c);
-  }, [busLat, busLng, bpLat, bpLng]);
+  }, [isBusServingStudentStop, busLat, busLng, bpLat, bpLng]);
 
   // Check if student device is near boarding stop (<= 450m)
   const isStudentAtBoarding = useMemo(() => {
@@ -505,7 +560,7 @@ export const StudentDashboard: React.FC = () => {
       ? (user?.college?.name ? `${user.college.name} Gate` : 'SRGEC College Gate')
       : (selectedBus?.route?.boardingPoints?.[0]?.name || 'Origin Village / Depot'));
 
-  const routeBoardingPoints = selectedBus?.route?.boardingPoints || (student?.boardingPoint ? [student.boardingPoint] : []);
+  const routeBoardingPoints = selectedBus?.route?.boardingPoints || (isBusServingStudentStop && student?.boardingPoint ? [student.boardingPoint] : []);
   const villageStops = routeBoardingPoints.filter(
     (s) =>
       !s.name.toLowerCase().includes('college') &&
@@ -520,7 +575,7 @@ export const StudentDashboard: React.FC = () => {
       : (activeTrip?.destinationName && !activeTrip.destinationName.toLowerCase().includes('college') && !activeTrip.destinationName.toLowerCase().includes('final depot'))
       ? activeTrip.destinationName
       : (isReturnTrip
-          ? (lastVillageStop ? `${lastVillageStop.name} (Terminus)` : (student?.boardingPoint?.name ? `${student.boardingPoint.name} (Terminus)` : 'Gudivada Bus Stand (Terminus)'))
+          ? (lastVillageStop ? `${lastVillageStop.name} (Terminus)` : (isBusServingStudentStop && student?.boardingPoint?.name ? `${student.boardingPoint.name} (Terminus)` : 'Route Terminus'))
           : (user?.college?.name ? `${user.college.name} Gate` : 'SRGEC College Gate'));
 
   const isCoordInAP = (lat?: number, lng?: number) => {
@@ -533,7 +588,7 @@ export const StudentDashboard: React.FC = () => {
       : (activeTrip?.destinationLat && Math.abs(activeTrip.destinationLat - (user?.college?.latitude || 16.35068)) > 0.005)
       ? activeTrip.destinationLat
       : (isReturnTrip
-          ? (lastVillageStop?.latitude || student?.boardingPoint?.latitude || 16.431025)
+          ? (lastVillageStop?.latitude || (isBusServingStudentStop ? student?.boardingPoint?.latitude : null) || 16.431025)
           : (user?.college?.latitude || 16.35068));
 
   const rawDestLng =
@@ -542,7 +597,7 @@ export const StudentDashboard: React.FC = () => {
       : (activeTrip?.destinationLng && Math.abs(activeTrip.destinationLng - (user?.college?.longitude || 81.04273)) > 0.005)
       ? activeTrip.destinationLng
       : (isReturnTrip
-          ? (lastVillageStop?.longitude || student?.boardingPoint?.longitude || 80.997348)
+          ? (lastVillageStop?.longitude || (isBusServingStudentStop ? student?.boardingPoint?.longitude : null) || 80.997348)
           : (user?.college?.longitude || 81.04273));
 
   const destinationLat = isCoordInAP(rawDestLat, rawDestLng) ? rawDestLat : (user?.college?.latitude || 16.35068);
@@ -761,6 +816,7 @@ export const StudentDashboard: React.FC = () => {
             </span>
             {filteredBuses.map((b) => {
               const isSelected = b.id === selectedBusId;
+              const isServesMyStop = checkBusServesBoardingStop(b, boardingPoint);
               const isLive =
                 (b as any).status === 'LIVE' ||
                 (b as any).status === 'APPROACHING' ||
@@ -773,7 +829,9 @@ export const StudentDashboard: React.FC = () => {
                   className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 border ${
                     isSelected
                       ? 'bg-gradient-to-r from-blue-600 to-cyan-500 border-cyan-400 text-white shadow-lg shadow-cyan-500/30'
-                      : 'chip-inactive'
+                      : isServesMyStop
+                      ? 'bg-blue-950/40 border-blue-500/40 text-cyan-200 hover:bg-blue-900/50'
+                      : 'chip-inactive opacity-80'
                   }`}
                 >
                   <span
@@ -782,16 +840,67 @@ export const StudentDashboard: React.FC = () => {
                     }`}
                   ></span>
                   <span>{b.busNumber}</span>
-                  {b.route && (
-                    <span className="text-[10px] opacity-80 font-normal">
+                  {isServesMyStop ? (
+                    <span className="text-[9px] bg-cyan-400/20 text-cyan-300 px-1.5 py-0.5 rounded font-black">
+                      Your Stop
+                    </span>
+                  ) : b.route ? (
+                    <span className="text-[10px] opacity-75 font-normal">
                       ({b.route.name.split('-')[0].trim()})
                     </span>
-                  )}
+                  ) : null}
                 </button>
               );
             })}
           </div>
         </div>
+
+        {/* Off-Route Notice & Recommended Buses Suggestion Banner */}
+        {!isBusServingStudentStop && boardingPoint && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-slate-900/80 border-2 border-amber-500/50 text-amber-200 shadow-2xl space-y-3">
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/25 border border-amber-400/40 text-amber-300 flex items-center justify-center text-2xl shrink-0 font-bold shadow-md">
+                ⚠️
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+                    Off-Route Notice
+                  </span>
+                  <span className="text-xs text-slate-300 font-bold">
+                    Bus #{selectedBus?.busNumber} &bull; Route: <strong className="text-white font-extrabold">{selectedBus?.route?.name || 'Different Route'}</strong>
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-white mt-1.5 leading-snug">
+                  Bus <span className="text-amber-300 font-extrabold">#{selectedBus?.busNumber}</span> does <span className="text-rose-400 underline uppercase font-black">not</span> travel via your boarding stop (<strong className="text-cyan-300">{boardingPoint.name}</strong>).
+                </p>
+              </div>
+            </div>
+
+            {preferredBuses.length > 0 && (
+              <div className="pt-3 border-t border-amber-400/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="text-xs font-black text-amber-200 flex items-center gap-1.5">
+                  <span>👉 Recommended buses that serve <strong className="text-white underline">{boardingPoint.name}</strong>:</span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {preferredBuses.map((pb) => (
+                    <button
+                      key={pb.id}
+                      type="button"
+                      onClick={() => setSelectedBusId(pb.id)}
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-black shadow-lg shadow-cyan-500/25 flex items-center gap-1.5 transition-all transform active:scale-95"
+                    >
+                      <span>🚌 Switch to Bus {pb.busNumber}</span>
+                      {((pb as any).status === 'LIVE' || pb.status === 'ACTIVE') && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Feedback toast */}
         {locationSuccessMsg && (
@@ -962,7 +1071,7 @@ export const StudentDashboard: React.FC = () => {
                   <BusMap
                     busLocation={resolvedBusLocation}
                     boardingPoint={
-                      boardingPoint
+                      isBusServingStudentStop && boardingPoint
                         ? {
                             name: boardingPoint.name,
                             latitude: boardingPoint.latitude,
@@ -982,12 +1091,18 @@ export const StudentDashboard: React.FC = () => {
                           }
                         : null
                     }
-                    destinationTarget={navigationTarget === 'COLLEGE' ? (isReturnTrip ? 'TRIP_DESTINATION' : 'COLLEGE') : 'BOARDING_POINT'}
+                    destinationTarget={
+                      !isBusServingStudentStop
+                        ? (isReturnTrip ? 'TRIP_DESTINATION' : 'COLLEGE')
+                        : (navigationTarget === 'COLLEGE'
+                            ? (isReturnTrip ? 'TRIP_DESTINATION' : 'COLLEGE')
+                            : 'BOARDING_POINT')
+                    }
                     routeStops={selectedBus?.route?.boardingPoints || []}
                     onRoadRouteCalculated={(nav) => setRoadNavData(nav)}
                     className="h-[380px] sm:h-[460px] lg:h-[520px] w-full"
                     zoom={14}
-                    show2kmCircle={navigationTarget === 'BOARDING_POINT'}
+                    show2kmCircle={isBusServingStudentStop && navigationTarget === 'BOARDING_POINT'}
                   />
                 </div>
               </div>
@@ -1052,9 +1167,11 @@ export const StudentDashboard: React.FC = () => {
                 <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
                   <span className="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-cyan-300 flex items-center gap-1.5">
                     <RouteIcon className="w-4 h-4" />
-                    {navigationTarget === 'COLLEGE'
-                      ? (isReturnTrip ? `Real Road Distance to ${destinationName}` : 'Real Road Distance to College Campus')
-                      : (isReturnTrip ? 'Real Road Distance to Your Drop-off Stop' : 'Real Road Distance to Your Pickup Stop')}
+                    {!isBusServingStudentStop
+                      ? (isReturnTrip ? `Real Road Distance on Bus Route (To ${destinationName})` : 'Real Road Distance on Bus Route (To College Gate)')
+                      : (navigationTarget === 'COLLEGE'
+                          ? (isReturnTrip ? `Real Road Distance to ${destinationName}` : 'Real Road Distance to College Campus')
+                          : (isReturnTrip ? 'Real Road Distance to Your Drop-off Stop' : 'Real Road Distance to Your Pickup Stop'))}
                   </span>
 
                   {isLiveState ? (
