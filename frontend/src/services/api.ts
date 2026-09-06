@@ -39,12 +39,12 @@ api.interceptors.request.use(
     const url = config.url || '';
     let token = localStorage.getItem('bus_tracker_token');
 
-    if (url.startsWith('/student') && localStorage.getItem('bus_tracker_student_token')) {
-      token = localStorage.getItem('bus_tracker_student_token');
-    } else if (url.startsWith('/driver') && localStorage.getItem('bus_tracker_driver_token')) {
-      token = localStorage.getItem('bus_tracker_driver_token');
-    } else if (url.startsWith('/admin') && localStorage.getItem('bus_tracker_admin_token')) {
-      token = localStorage.getItem('bus_tracker_admin_token');
+    if (url.startsWith('/student')) {
+      token = localStorage.getItem('bus_tracker_student_token') || token;
+    } else if (url.startsWith('/driver')) {
+      token = localStorage.getItem('bus_tracker_driver_token') || token;
+    } else if (url.startsWith('/admin')) {
+      token = localStorage.getItem('bus_tracker_admin_token') || token;
     }
 
     if (token) {
@@ -53,6 +53,16 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 403 && error.config?.url?.startsWith('/admin')) {
+      console.warn('Admin route 403 Forbidden: User is not logged in as Admin.');
+    }
+    return Promise.reject(error);
+  }
 );
 
 export const authApi = {

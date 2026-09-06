@@ -261,15 +261,15 @@ export function createTerminusIcon(name: string) {
   });
 }
 
-// Route Stop Icon (Exact Center Anchored)
+// Route Stop Icon (Exact Center Anchored with crisp readable pill badge)
 export function createStopIcon(sequence: number, name: string) {
   const html = `
-    <div class="relative w-6 h-6 flex flex-col items-center justify-center">
-      <div class="w-6 h-6 rounded-full bg-slate-900 border-2 border-indigo-400 text-indigo-200 text-[10px] font-black flex items-center justify-center shadow-lg">
+    <div class="relative w-8 h-8 flex flex-col items-center justify-center">
+      <div class="w-7 h-7 rounded-full bg-slate-900 border-2 border-indigo-400 text-white text-xs font-black flex items-center justify-center shadow-2xl ring-2 ring-indigo-500/30">
         ${sequence}
       </div>
-      <div class="absolute -bottom-3.5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-slate-950/90 text-slate-200 text-[8px] font-semibold rounded shadow whitespace-nowrap border border-slate-800 z-10">
-        ${name}
+      <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-slate-950/95 text-indigo-200 border border-indigo-500/50 text-[10px] font-extrabold rounded-md shadow-2xl whitespace-nowrap z-10 pointer-events-none">
+        ${sequence}. ${name}
       </div>
     </div>
   `;
@@ -277,8 +277,8 @@ export function createStopIcon(sequence: number, name: string) {
   return L.divIcon({
     html,
     className: 'custom-stop-marker',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
   });
 }
 
@@ -821,6 +821,44 @@ export const BusMap: React.FC<BusMapProps> = ({
             </Popup>
           </Marker>
         )}
+
+        {/* All Route Stops along the transit corridor */}
+        {routeStops.map((stop) => {
+          const isStudentStop =
+            boardingPoint &&
+            Math.abs(boardingPoint.latitude - stop.latitude) < 0.0002 &&
+            Math.abs(boardingPoint.longitude - stop.longitude) < 0.0002;
+          if (isStudentStop) return null; // Avoid duplicate marker over student's main boarding point
+          if (
+            college &&
+            Math.abs(college.latitude - stop.latitude) < 0.0002 &&
+            Math.abs(college.longitude - stop.longitude) < 0.0002
+          )
+            return null; // Avoid duplicate marker over college campus
+
+          return (
+            <Marker
+              key={stop.id || `stop_${stop.sequence}`}
+              position={[stop.latitude, stop.longitude]}
+              icon={createStopIcon(stop.sequence, stop.name)}
+            >
+              <Popup>
+                <div className="p-1.5 space-y-1 min-w-[160px]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center">
+                      #{stop.sequence}
+                    </span>
+                    <span className="text-xs font-black text-white uppercase tracking-wider">Route Stop</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-white mt-0.5">{stop.name}</h4>
+                  <p className="text-xs text-slate-300 font-mono">
+                    {stop.latitude.toFixed(5)}, {stop.longitude.toFixed(5)}
+                  </p>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
 
         {/* Single Selected Tracked Bus Marker (Live Smooth-Gliding and Corner-Cutting) */}
         {busLocation && busLocation.latitude && busLocation.longitude && (
