@@ -26,6 +26,8 @@ import {
   UserCheck,
   X,
   Repeat,
+  Play,
+  Square,
 } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
@@ -58,6 +60,13 @@ export const StudentDashboard: React.FC = () => {
     delayMinutes?: number;
     destinationName?: string;
   } | null>(null);
+
+  // Volunteer Broadcast Mode (For student on board if driver phone is unavailable)
+  const [isVolunteerMode, setIsVolunteerMode] = useState<boolean>(false);
+  const [volunteerMsg, setVolunteerMsg] = useState<string>('');
+  const [volunteerUpdateCount, setVolunteerUpdateCount] = useState<number>(0);
+  const [showVolunteerModal, setShowVolunteerModal] = useState<boolean>(false);
+  const volunteerWatchIdRef = useRef<number | null>(null);
 
   const student = user?.student;
   const boardingPoint = student?.boardingPoint;
@@ -234,6 +243,16 @@ export const StudentDashboard: React.FC = () => {
       }
     };
 
+    const handleVolunteerStatus = (data: any) => {
+      if (data?.message) {
+        setVolunteerMsg(data.message);
+      }
+    };
+
+    const handleVolunteerAck = () => {
+      setVolunteerUpdateCount((c) => c + 1);
+    };
+
     socket.on('bus:location:update', handleLocationUpdate);
     socket.on('bus:trip:started', handleTripStarted);
     socket.on('bus:trip:ended', handleTripEnded);
@@ -241,6 +260,8 @@ export const StudentDashboard: React.FC = () => {
     socket.on('bus:approaching', handleProximityAlert);
     socket.on('bus:arrived', handleBusArrived);
     socket.on('bus:return_completed', handleReturnCompleted);
+    socket.on('volunteer:status', handleVolunteerStatus);
+    socket.on('volunteer:location:ack', handleVolunteerAck);
 
     return () => {
       socket.emit('bus:unsubscribe', { busId: selectedBusId });
@@ -251,8 +272,59 @@ export const StudentDashboard: React.FC = () => {
       socket.off('bus:approaching', handleProximityAlert);
       socket.off('bus:arrived', handleBusArrived);
       socket.off('bus:return_completed', handleReturnCompleted);
+      socket.off('volunteer:status', handleVolunteerStatus);
+      socket.off('volunteer:location:ack', handleVolunteerAck);
     };
   }, [selectedBusId]);
+
+  // Volunteer GPS Continuous Broadcast Watcher
+  useEffect(() => {
+    if (!isVolunteerMode || !selectedBusId) {
+      if (volunteerWatchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(volunteerWatchIdRef.current);
+        volunteerWatchIdRef.current = null;
+      }
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      setVolunteerMsg('Geolocation is not supported on this browser/device.');
+      setIsVolunteerMode(false);
+      return;
+    }
+
+    const socket = getSocket();
+    if (!socket || !socket.connected) {
+      socket?.connect();
+    }
+
+    volunteerWatchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const payload = {
+          busId: selectedBusId,
+          latitude: Number(pos.coords.latitude.toFixed(6)),
+          longitude: Number(pos.coords.longitude.toFixed(6)),
+          accuracy: Math.max(1, Number((pos.coords.accuracy || 5).toFixed(1))),
+          speed: pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : 0,
+          heading: pos.coords.heading || 0,
+          timestamp: new Date().toISOString(),
+        };
+        socket?.emit('volunteer:location:update', payload);
+      },
+      (err) => {
+        console.warn('Volunteer GPS error:', err);
+        setVolunteerMsg('GPS error. Make sure High Accuracy location is enabled.');
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+    );
+
+    return () => {
+      if (volunteerWatchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(volunteerWatchIdRef.current);
+        volunteerWatchIdRef.current = null;
+      }
+    };
+  }, [isVolunteerMode, selectedBusId]);
 
   // 5. Intelligent Dual-Phase Real Road Route Switching
   // Route distance is strictly calculated between Bus and Saved Boarding Stop (not user live device)
@@ -653,6 +725,20 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               <button
+                type="button"
+                onClick={() => setShowVolunteerModal(true)}
+                className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md shrink-0 border ${
+                  isVolunteerMode
+                    ? 'bg-amber-600 text-white animate-pulse border-amber-400 shadow-amber-500/25'
+                    : 'bg-white/90 dark:bg-slate-800/90 text-amber-700 dark:text-amber-300 hover:bg-slate-100 dark:hover:bg-slate-750 border-amber-400/40'
+                }`}
+                title="Volunteer on-board GPS broadcast"
+              >
+                <Radio className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isVolunteerMode ? 'VOLUNTEERING' : 'VOLUNTEER'}</span>
+              </button>
+
+              <button
                 onClick={() => fetchBusStatus(selectedBusId)}
                 className="p-2.5 water-glass hover:bg-slate-700/80 text-cyan-200 border border-white/15 rounded-xl transition-colors shrink-0 shadow-md"
                 title="Refresh Live GPS"
@@ -1036,6 +1122,96 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Volunteer Mode Modal */}
+      {showVolunteerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="water-glass max-w-md w-full p-6 sm:p-7 rounded-3xl shadow-2xl border-2 border-slate-300 dark:border-white/20 space-y-4 relative">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-xl shadow-inner">
+                  📡
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">Volunteer GPS Broadcast</h3>
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">On-Board Emergency Backup</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowVolunteerModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-semibold">
+              Are you currently riding inside <strong className="text-slate-900 dark:text-white">Bus {selectedBus?.busNumber}</strong>?
+              If the driver's phone is offline or battery died, you can broadcast your live smartphone GPS to keep the bus visible for all students and admins.
+            </p>
+
+            {volunteerMsg && (
+              <div className="p-3.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <span>{volunteerMsg}</span>
+              </div>
+            )}
+
+            {isVolunteerMode && (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border-2 border-emerald-500/50 space-y-2 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    Broadcasting Live Bus GPS
+                  </span>
+                  <span className="text-xs font-mono text-slate-800 dark:text-slate-200 font-black">
+                    Updates: #{volunteerUpdateCount}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 font-medium leading-normal">
+                  Driver-priority active: If the driver's phone connects, driver GPS automatically takes precedence with a single bus marker.
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2 flex items-center gap-2.5">
+              {!isVolunteerMode ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsVolunteerMode(true);
+                    setVolunteerMsg('');
+                  }}
+                  className="flex-1 py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 transition-all active:scale-98"
+                >
+                  <Play className="w-4 h-4 fill-slate-950" />
+                  <span>START BROADCASTING</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsVolunteerMode(false);
+                    setVolunteerMsg('');
+                  }}
+                  className="flex-1 py-3.5 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-sm shadow-xl shadow-red-600/25 flex items-center justify-center gap-2 transition-all active:scale-98"
+                >
+                  <Square className="w-4 h-4 fill-white" />
+                  <span>STOP BROADCASTING</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowVolunteerModal(false)}
+                className="px-4 py-3.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300 hover:bg-slate-300 dark:hover:text-white font-extrabold text-xs transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

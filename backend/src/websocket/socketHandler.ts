@@ -5,6 +5,8 @@ import { validateGpsUpdate, LocationPayload } from '../utils/gpsValidator';
 import { checkAndEmitProximityAlerts } from '../services/proximity.service';
 import { checkCollegeGateGeofence } from '../services/geofence.service';
 
+const lastDriverGpsMap = new Map<string, number>();
+
 export function setupWebSocket(io: Server) {
   // Authentication middleware for Socket.IO
   io.use((socket: Socket, next) => {
@@ -219,6 +221,9 @@ export function setupWebSocket(io: Server) {
           status: 'LIVE',
         };
 
+        // Track last driver update for driver vs volunteer priority
+        lastDriverGpsMap.set(bus.id, Date.now());
+
         // Broadcast to college room (for admin map & college monitors)
         // and to bus room (for students listening to this bus)
         io.to(`college_${user.collegeId}`).to(`bus_${bus.id}`).emit('bus:location:update', payload);
@@ -252,6 +257,153 @@ export function setupWebSocket(io: Server) {
       } catch (err) {
         console.error('Error handling driver:location:update:', err);
         socket.emit('error', { message: 'Internal server error while processing GPS update.' });
+      }
+    });
+
+    // 4. Volunteer Mode (Authorized Student Broadcasting Bus GPS if Driver Phone is Unavailable)
+    socket.on('volunteer:location:update', async (data: LocationPayload & { busId: string }) => {
+      try {
+        if (!data || !data.busId) {
+          socket.emit('error', { message: 'Bus ID is required for volunteer broadcast.' });
+          return;
+        }
+
+        const busId = data.busId;
+
+        // Check if driver has sent a live update in the last 15 seconds
+        const lastDriverTime = lastDriverGpsMap.get(busId) || 0;
+        const isDriverActivelyStreaming = Date.now() - lastDriverTime < 15000;
+
+        if (isDriverActivelyStreaming) {
+          socket.emit('volunteer:status', {
+            active: false,
+            provider: 'DRIVER',
+            message: 'Driver GPS is currently active. Driver GPS takes priority.',
+          });
+          return;
+        }
+
+        const bus = await prisma.bus.findUnique({
+          where: { id: busId },
+          include: {
+            trips: {
+              where: { status: 'ACTIVE' },
+              include: { driver: true },
+              take: 1,
+            },
+          },
+        });
+
+        if (!bus || bus.collegeId !== user.collegeId) {
+          socket.emit('error', { message: 'Bus not found or unauthorized college.' });
+          return;
+        }
+
+        const activeTrip = bus.trips[0];
+        const defaultDriverId = activeTrip?.driverId || bus.assignedDriverId || 'cmtlrzeto00075x069uk1ym0s';
+        const defaultDriverName = activeTrip?.driver?.driverName || 'Volunteer On-Board';
+
+        const previousLocation = await prisma.liveLocation.findUnique({
+          where: { busId: bus.id },
+        });
+
+        const validation = validateGpsUpdate(
+          data,
+          previousLocation
+            ? {
+                latitude: previousLocation.latitude,
+                longitude: previousLocation.longitude,
+                timestamp: previousLocation.timestamp,
+              }
+            : null
+        );
+
+        if (!validation.isValid || !validation.cleanedLocation) {
+          return;
+        }
+
+        const clean = validation.cleanedLocation;
+
+        // Upsert live location from volunteer
+        await prisma.liveLocation.upsert({
+          where: { busId: bus.id },
+          create: {
+            busId: bus.id,
+            tripId: activeTrip?.id || 'VOLUNTEER_TRIP',
+            driverId: defaultDriverId,
+            latitude: clean.latitude,
+            longitude: clean.longitude,
+            accuracy: clean.accuracy,
+            speed: clean.speed,
+            heading: clean.heading,
+            timestamp: clean.timestamp,
+            isStale: false,
+          },
+          update: {
+            tripId: activeTrip?.id || 'VOLUNTEER_TRIP',
+            driverId: defaultDriverId,
+            latitude: clean.latitude,
+            longitude: clean.longitude,
+            accuracy: clean.accuracy,
+            speed: clean.speed,
+            heading: clean.heading,
+            timestamp: clean.timestamp,
+            isStale: false,
+          },
+        });
+
+        const payload = {
+          busId: bus.id,
+          busNumber: bus.busNumber,
+          tripId: activeTrip?.id || 'VOLUNTEER_TRIP',
+          tripType: activeTrip?.tripType || 'MORNING_PICKUP',
+          originName: activeTrip?.originName || 'Campus Route',
+          destinationName: activeTrip?.destinationName || 'SRGEC Campus',
+          destinationLat: activeTrip?.destinationLat,
+          destinationLng: activeTrip?.destinationLng,
+          driverId: defaultDriverId,
+          driverName: defaultDriverName,
+          latitude: clean.latitude,
+          longitude: clean.longitude,
+          accuracy: clean.accuracy,
+          speed: clean.speed,
+          heading: clean.heading,
+          timestamp: clean.timestamp.toISOString(),
+          isStale: false,
+          status: 'LIVE',
+          provider: 'VOLUNTEER',
+        };
+
+        // Broadcast to college and bus room
+        io.to(`college_${user.collegeId}`).to(`bus_${bus.id}`).emit('bus:location:update', payload);
+
+        socket.emit('volunteer:location:ack', {
+          success: true,
+          provider: 'VOLUNTEER',
+          timestamp: clean.timestamp.toISOString(),
+        });
+
+        if (activeTrip) {
+          await checkAndEmitProximityAlerts(
+            io,
+            activeTrip.id,
+            bus.id,
+            bus.busNumber,
+            clean.latitude,
+            clean.longitude
+          );
+          await checkCollegeGateGeofence(
+            io,
+            activeTrip.id,
+            bus.id,
+            clean.latitude,
+            clean.longitude,
+            clean.speed,
+            clean.heading
+          );
+        }
+      } catch (err) {
+        console.error('Error handling volunteer:location:update:', err);
       }
     });
 
