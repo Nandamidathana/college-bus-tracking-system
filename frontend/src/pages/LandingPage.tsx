@@ -43,14 +43,10 @@ export const LandingPage: React.FC = () => {
               In Real Time
             </span>
           </h1>
-
-          <p className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-semibold subtext-muted text-slate-600 dark:text-slate-300">
-            Never miss your morning pickup or wait aimlessly at the bus stop. Accurate live GPS tracking, exact turn-by-turn road distances, and instant arrival alerts.
-          </p>
         </div>
 
         {/* 3 User Role Gateway Cards (iPhone Water UI Frosted Glass) */}
-        <div className="max-w-6xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+        <div className="max-w-6xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {/* Student Card */}
           <div className="water-glass hover:water-glass-glow rounded-3xl p-7 flex flex-col justify-between transition-all duration-300 group">
             <div>
@@ -59,21 +55,21 @@ export const LandingPage: React.FC = () => {
               </div>
               <h3 className="text-2xl font-black mt-5 tracking-tight card-title">Student Portal</h3>
               <p className="text-sm mt-2 leading-relaxed font-semibold card-desc">
-                Live Uber-like bus tracking, precise road distance to your boarding stop, and automated 2 km arrival alerts.
+                Live bus tracking, road distance to your boarding stop, and automated 2 km arrival alerts.
               </p>
 
               <div className="mt-6 space-y-2.5 text-xs font-bold">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="feature-item-text">Real-time GPS bus location</span>
+                  <span className="feature-item-text">Live GPS Bus Radar & Map</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="feature-item-text">Exact road distance & ETA</span>
+                  <span className="feature-item-text">Exact Stop Distance & ETA</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="feature-item-text">2 KM automatic notification</span>
+                  <span className="feature-item-text">2 KM Arrival Notification</span>
                 </div>
               </div>
             </div>
@@ -89,7 +85,7 @@ export const LandingPage: React.FC = () => {
                 to="/student/register"
                 className="w-full btn-secondary-blue py-2.5 px-4 rounded-2xl flex items-center justify-center text-xs transition-colors shadow-sm"
               >
-                New Student? Register
+                New Student Registration
               </Link>
             </div>
           </div>
@@ -102,21 +98,21 @@ export const LandingPage: React.FC = () => {
               </div>
               <h3 className="text-2xl font-black mt-5 tracking-tight card-title">Driver Portal</h3>
               <p className="text-sm mt-2 leading-relaxed font-semibold card-desc">
-                Stream real-time hardware GPS to students and college admins. One-touch start trip and live navigation radar.
+                Broadcast real-time bus GPS coordinates. One-touch trip controls and live navigation.
               </p>
 
               <div className="mt-6 space-y-2.5 text-xs font-bold">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="feature-item-text">One-touch Start / End trip</span>
+                  <span className="feature-item-text">One-Touch Start / End Trip</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="feature-item-text">Continuous device GPS broadcast</span>
+                  <span className="feature-item-text">High-Accuracy GPS Broadcast</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="feature-item-text">Live Driver Map view</span>
+                  <span className="feature-item-text">Driver Navigation Map</span>
                 </div>
               </div>
             </div>
@@ -145,21 +141,21 @@ export const LandingPage: React.FC = () => {
               </div>
               <h3 className="text-2xl font-black mt-5 tracking-tight card-title">Admin Console</h3>
               <p className="text-sm mt-2 leading-relaxed font-semibold card-desc">
-                Centralized fleet management. Live multi-bus radar, driver approvals, route creator, and transport controls.
+                Centralized fleet management. Live multi-bus radar, driver approvals, and route creator.
               </p>
 
               <div className="mt-6 space-y-2.5 text-xs font-bold">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-purple-500 shrink-0" />
-                  <span className="feature-item-text">Live multi-bus fleet radar</span>
+                  <span className="feature-item-text">Live Multi-Bus Fleet Radar</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-purple-500 shrink-0" />
-                  <span className="feature-item-text">Driver approvals & bus assignment</span>
+                  <span className="feature-item-text">Driver Approvals & Assignments</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-purple-500 shrink-0" />
-                  <span className="feature-item-text">Route stops & GPS geocoding</span>
+                  <span className="feature-item-text">Routes & Boarding Stop Setup</span>
                 </div>
               </div>
             </div>
@@ -172,7 +168,7 @@ export const LandingPage: React.FC = () => {
                 Admin Sign In
               </Link>
               <div className="text-center py-2 text-[11px] font-bold subtext-muted">
-                Transport Office Management
+                Transport Management
               </div>
             </div>
           </div>
@@ -181,7 +177,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="py-6 px-4 text-center text-xs font-bold subtext-muted">
-        &copy; {new Date().getFullYear()} College Bus Live Tracking &bull; Powered by Real-Time GPS &amp; OSRM Road Engine
+        &copy; {new Date().getFullYear()} College Bus Tracking System &bull; SRGEC
       </footer>
     </div>
   );

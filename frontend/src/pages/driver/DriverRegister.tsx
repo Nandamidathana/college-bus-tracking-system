@@ -80,8 +80,8 @@ export const DriverRegister: React.FC = () => {
             </div>
           </Link>
           <h2 className="text-3xl font-black tracking-tight drop-shadow-sm text-slate-900 dark:text-white card-title">Driver Registration</h2>
-          <p className="text-sm font-semibold subtext-muted text-slate-600 dark:text-slate-300">
-            Register to broadcast live GPS location for SRGEC college buses.
+          <p className="text-xs font-semibold subtext-muted text-slate-600 dark:text-slate-300">
+            SRGEC Live GPS Broadcasting
           </p>
         </div>
 
