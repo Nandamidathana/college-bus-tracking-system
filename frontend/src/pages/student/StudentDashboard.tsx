@@ -79,16 +79,24 @@ export const StudentDashboard: React.FC = () => {
   const student = user?.student;
   const boardingPoint = student?.boardingPoint;
 
-  const selectedBus = useMemo(
-    () => (selectedBusId ? buses.find((b) => b.id === selectedBusId) || null : null),
-    [buses, selectedBusId]
-  );
+  const selectedBus = useMemo(() => {
+    if (!selectedBusId) return null;
+    const b = buses.find((item) => item.id === selectedBusId) || null;
+    if (!b) return null;
+    if (busData?.route && (!b.route || !b.route.boardingPoints || b.route.boardingPoints.length === 0)) {
+      return { ...b, route: busData.route };
+    }
+    return b;
+  }, [buses, selectedBusId, busData]);
 
   // Check whether the currently selected bus serves the student's stop
-  const isBusServingStudentStop = useMemo(
-    () => (selectedBus ? checkBusServesBoardingStop(selectedBus, boardingPoint, student?.routeId) : true),
-    [selectedBus, boardingPoint, student?.routeId]
-  );
+  const isBusServingStudentStop = useMemo(() => {
+    if (!selectedBus) return true;
+    if (busData && typeof busData.isServingStudent === 'boolean') {
+      return busData.isServingStudent;
+    }
+    return checkBusServesBoardingStop(selectedBus, boardingPoint, student?.routeId);
+  }, [selectedBus, boardingPoint, student?.routeId, busData]);
 
   // Find all buses in the fleet that DO pass through this student's boarding point
   const preferredBuses = useMemo(
@@ -522,7 +530,7 @@ export const StudentDashboard: React.FC = () => {
 
   const routeBoardingPoints = selectedBus?.route?.boardingPoints || [];
   const villageStops = routeBoardingPoints.filter(
-    (s) =>
+    (s: any) =>
       !s.name.toLowerCase().includes('college') &&
       !s.name.toLowerCase().includes('campus') &&
       !s.name.toLowerCase().includes('gate') &&

@@ -57,8 +57,8 @@ export function extractDistinctiveTokens(name: string): string[] {
 }
 
 /**
- * Checks whether a bus serves a student's boarding point strictly by route ID, stop ID,
- * exact stop name, or distinctive token matching (excluding college/campus noise words).
+ * Checks whether a bus serves a student's boarding point.
+ * The bus's assigned route stops (boardingPoints) are the strict source of truth.
  */
 export function checkBusServesBoardingStop(
   bus?: { id?: string; routeId?: string | null; route?: { id?: string; name?: string; boardingPoints?: Array<{ id?: string; name: string }> } | null } | null,
@@ -68,23 +68,15 @@ export function checkBusServesBoardingStop(
   if (!bus) return false;
   if (!studentBp) return true; // If student has no boarding point registered yet, show all buses
 
-  const busRouteId = bus.routeId || bus.route?.id;
-  const bpRouteId = studentBp.routeId || studentRouteId;
-
-  // 1. Direct Route ID match (Source of truth)
-  if (busRouteId && bpRouteId && busRouteId === bpRouteId) {
-    return true;
-  }
-
   const stops = bus.route?.boardingPoints || [];
   if (stops.length === 0) return false;
 
-  // 2. Direct Stop ID match
+  // 1. Direct Stop ID match in bus route stops
   if (studentBp.id && stops.some((s) => s.id && s.id === studentBp.id)) {
     return true;
   }
 
-  // 3. Name-based match excluding destination/college stops
+  // 2. Name-based match excluding destination/college stops
   const bpName = (studentBp.name || '').trim().toLowerCase();
   if (!bpName) return false;
 
@@ -116,8 +108,8 @@ export function checkBusServesBoardingStop(
       stopTokens.some(
         (sToken) =>
           sToken === bpToken ||
-          (bpToken.length >= 5 && sToken.includes(bpToken)) ||
-          (sToken.length >= 5 && bpToken.includes(sToken))
+          (bpToken.length >= 4 && sToken.includes(bpToken)) ||
+          (sToken.length >= 4 && bpToken.includes(sToken))
       )
     );
     if (hasMatch) return true;
@@ -128,8 +120,8 @@ export function checkBusServesBoardingStop(
     routeNameTokens.some(
       (rToken) =>
         rToken === bpToken ||
-        (bpToken.length >= 5 && rToken.includes(bpToken)) ||
-        (rToken.length >= 5 && bpToken.includes(rToken))
+        (bpToken.length >= 4 && rToken.includes(bpToken)) ||
+        (rToken.length >= 4 && bpToken.includes(rToken))
     )
   );
 
