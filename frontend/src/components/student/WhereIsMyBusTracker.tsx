@@ -228,8 +228,8 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
                   Bus #{busNumber}
                 </span>
                 {!studentStopTelemetry && studentBoardingPoint && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40">
-                    Off-Route Bus
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-400/40">
+                    ❌ No Route to Your Stop
                   </span>
                 )}
               </div>
@@ -259,12 +259,14 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
 
         {/* Off-Route Notice Banner */}
         {!studentStopTelemetry && studentBoardingPoint && (
-          <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/15 border-2 border-amber-500/40 text-amber-200 text-xs font-bold flex items-center gap-3 shadow-md">
-            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+          <div className="p-3.5 sm:p-4 rounded-2xl bg-red-500/15 border-2 border-red-500/50 text-red-100 text-xs font-bold flex items-center gap-3 shadow-md">
+            <span className="text-xl shrink-0">❌</span>
             <div className="flex-1">
-              <span className="text-amber-300 font-extrabold uppercase tracking-wide mr-1">Off-Route Notice:</span>
-              <span>
-                Bus <strong className="text-white">#{busNumber}</strong> operates on <strong className="text-white">{route?.name || 'this route'}</strong> and does <strong className="text-rose-400 underline uppercase font-black">not</strong> pass through your boarding stop (<strong className="text-cyan-300">{studentBoardingPoint.name}</strong>). Showing this bus's full route progression.
+              <span className="text-white font-black block text-sm">
+                ❌ No Route Found – This bus does not travel through your boarding point.
+              </span>
+              <span className="text-red-200 font-semibold mt-0.5 block">
+                Bus <strong className="text-white">#{busNumber}</strong> operates on <strong className="text-amber-300 underline">{route?.name || 'this route'}</strong> and does <strong className="text-rose-300 underline uppercase font-black">not</strong> contain your boarding stop (<strong className="text-cyan-300">{studentBoardingPoint.name}</strong>).
               </span>
             </div>
           </div>
@@ -306,10 +308,10 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
 
             <div className="p-3 bg-slate-50 dark:bg-slate-900/70 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
               <span className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 block">
-                {studentStopTelemetry ? 'Your Stop Distance' : 'Bus Route Distance'}
+                {studentStopTelemetry ? 'Your Stop Distance' : 'Stop Status'}
               </span>
-              <span className="text-base font-black text-blue-700 dark:text-cyan-300 mt-0.5 block truncate">
-                {studentStopTelemetry ? studentStopTelemetry.distanceKm : displayDistance}
+              <span className={`text-base font-black mt-0.5 block truncate ${studentStopTelemetry ? 'text-blue-700 dark:text-cyan-300' : 'text-red-400'}`}>
+                {studentStopTelemetry ? studentStopTelemetry.distanceKm : '❌ No Route'}
               </span>
             </div>
 

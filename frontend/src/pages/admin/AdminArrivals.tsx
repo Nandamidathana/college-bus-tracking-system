@@ -8,7 +8,6 @@ import {
   Search,
   Filter,
   Download,
-  Printer,
   Calendar,
   Bus,
   User,
@@ -342,14 +341,6 @@ export const AdminArrivals: React.FC = () => {
               <Award className="w-4 h-4" />
             )}
             Monthly Performance
-          </button>
-
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/90 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-2 border-slate-300 dark:border-slate-700 text-sm font-black transition-all shadow-sm"
-            title="Print sheet"
-          >
-            <Printer className="w-4 h-4" />
           </button>
 
           <button
