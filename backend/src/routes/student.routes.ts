@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
 import { calculateDistanceMeters, formatDistance, estimateTravelTimeMinutes } from '../utils/haversine';
+import { checkBusServesBoardingStop } from '../utils/routeMatching';
 import { ENV } from '../config/env';
 
 const router = Router();
@@ -347,20 +348,28 @@ router.get('/buses/:busId/location', async (req: Request, res: Response) => {
     const live = bus.liveLocation;
     const isReturnTrip = activeTrip.tripType === 'EVENING_RETURN';
 
-    // 1. Distance & ETA to Student's designated stop
-    let distanceToStudentMeters = 0;
-    let formattedDistanceToStudent = '0 m';
-    let etaMinutesToStudent = 0;
+    // 1. Strict Stop & Route Matching Validation
+    const isBusServingStudentStop = checkBusServesBoardingStop(
+      bus,
+      student.boardingPoint,
+      student.routeId
+    );
 
-    if (student.boardingPoint) {
-      distanceToStudentMeters = calculateDistanceMeters(
+    // Distance & ETA to Student's designated stop (Only if bus route actually passes student stop)
+    let distanceToStudentMeters: number | null = null;
+    let formattedDistanceToStudent = '❌ No Route';
+    let etaMinutesToStudent: number | null = null;
+
+    if (isBusServingStudentStop && student.boardingPoint) {
+      const dist = calculateDistanceMeters(
         live.latitude,
         live.longitude,
         student.boardingPoint.latitude,
         student.boardingPoint.longitude
       );
-      formattedDistanceToStudent = formatDistance(distanceToStudentMeters);
-      etaMinutesToStudent = estimateTravelTimeMinutes(distanceToStudentMeters);
+      distanceToStudentMeters = Math.round(dist);
+      formattedDistanceToStudent = formatDistance(dist);
+      etaMinutesToStudent = estimateTravelTimeMinutes(dist);
     }
 
     // 2. Distance & ETA to Trip Destination (College Gate vs Final Village Stop)
@@ -416,10 +425,12 @@ router.get('/buses/:busId/location', async (req: Request, res: Response) => {
     let status = 'LIVE';
     if (live.isStale) {
       status = 'LOCATION_DELAYED';
-    } else if (distanceToStudentMeters <= 500) {
-      status = 'NEARBY';
-    } else if (distanceToStudentMeters <= ENV.PROXIMITY_THRESHOLD_METERS) {
-      status = 'APPROACHING';
+    } else if (isBusServingStudentStop && distanceToStudentMeters !== null) {
+      if (distanceToStudentMeters <= 500) {
+        status = 'NEARBY';
+      } else if (distanceToStudentMeters <= ENV.PROXIMITY_THRESHOLD_METERS) {
+        status = 'APPROACHING';
+      }
     }
 
     return res.json({
@@ -446,20 +457,26 @@ router.get('/buses/:busId/location', async (req: Request, res: Response) => {
         timestamp: live.timestamp,
         isStale: live.isStale,
       },
-      boardingPoint: {
-        name: student.boardingPoint.name,
-        latitude: student.boardingPoint.latitude,
-        longitude: student.boardingPoint.longitude,
-      },
-      college: {
-        name: student.college.name,
-        latitude: student.college.latitude,
-        longitude: student.college.longitude,
-      },
+      isServingStudent: isBusServingStudentStop,
+      boardingPoint: isBusServingStudentStop && student.boardingPoint
+        ? {
+            name: student.boardingPoint.name,
+            latitude: student.boardingPoint.latitude,
+            longitude: student.boardingPoint.longitude,
+          }
+        : null,
+      college: student.college
+        ? {
+            name: student.college.name,
+            latitude: student.college.latitude,
+            longitude: student.college.longitude,
+          }
+        : null,
       distance: {
-        meters: Math.round(distanceToStudentMeters),
+        meters: distanceToStudentMeters,
         formatted: formattedDistanceToStudent,
         estimatedMinutes: etaMinutesToStudent,
+        isServingStudent: isBusServingStudentStop,
       },
       destinationDistance: {
         meters: Math.round(distanceToDestMeters),

@@ -8,6 +8,7 @@ import { BusMap } from '../../components/maps/BusMap';
 import { Navbar } from '../../components/common/Navbar';
 import { StudentProfileModal } from '../../components/student/StudentProfileModal';
 import { WhereIsMyBusTracker } from '../../components/student/WhereIsMyBusTracker';
+import { checkBusServesBoardingStop } from '../../utils/routeMatching';
 import {
   Compass,
   MapPin,
@@ -78,28 +79,6 @@ export const StudentDashboard: React.FC = () => {
   const student = user?.student;
   const boardingPoint = student?.boardingPoint;
 
-  // Helper: Check if a bus serves the student's designated boarding point strictly by route stops
-  const checkBusServesBoardingStop = (bus?: Bus | null, studentBp?: BoardingPoint | null): boolean => {
-    if (!bus) return false;
-    if (!studentBp) return true;
-    const stops = bus.route?.boardingPoints || [];
-    if (stops.length === 0) return false;
-
-    const bpName = (studentBp.name || '').toLowerCase().trim();
-    const bpId = studentBp.id;
-
-    return stops.some((s) => {
-      if (bpId && s.id && bpId === s.id) return true;
-      const sName = (s.name || '').toLowerCase().trim();
-      if (!sName || !bpName) return false;
-      if (sName === bpName) return true;
-      // Word/token containment (e.g. "gudivada" inside "gudivada bus stand" or vice versa)
-      const sWords = sName.split(/[\s,/-]+/).filter((w) => w.length >= 3);
-      const bpWords = bpName.split(/[\s,/-]+/).filter((w) => w.length >= 3);
-      return sWords.some((w) => bpWords.includes(w)) || bpWords.some((w) => sWords.includes(w));
-    });
-  };
-
   const selectedBus = useMemo(
     () => (selectedBusId ? buses.find((b) => b.id === selectedBusId) || null : null),
     [buses, selectedBusId]
@@ -107,14 +86,14 @@ export const StudentDashboard: React.FC = () => {
 
   // Check whether the currently selected bus serves the student's stop
   const isBusServingStudentStop = useMemo(
-    () => (selectedBus ? checkBusServesBoardingStop(selectedBus, boardingPoint) : true),
-    [selectedBus, boardingPoint]
+    () => (selectedBus ? checkBusServesBoardingStop(selectedBus, boardingPoint, student?.routeId) : true),
+    [selectedBus, boardingPoint, student?.routeId]
   );
 
   // Find all buses in the fleet that DO pass through this student's boarding point
   const preferredBuses = useMemo(
-    () => buses.filter((b) => checkBusServesBoardingStop(b, boardingPoint)),
-    [buses, boardingPoint]
+    () => buses.filter((b) => checkBusServesBoardingStop(b, boardingPoint, student?.routeId)),
+    [buses, boardingPoint, student?.routeId]
   );
 
   // 1. Continuous Watch for Student's Own Live Hardware GPS (Real-time GNSS)
@@ -519,11 +498,13 @@ export const StudentDashboard: React.FC = () => {
     busData?.status === 'NEARBY' ||
     busData?.active === true;
 
-  const displayDistance =
-    roadNavData?.formattedDistance || busData?.distance?.formatted || '---';
+  const displayDistance = isBusServingStudentStop
+    ? (roadNavData?.formattedDistance || busData?.distance?.formatted || '---')
+    : '❌ No Route';
 
-  const displayEta =
-    roadNavData?.estimatedMinutes || busData?.distance?.estimatedMinutes || 0;
+  const displayEta = isBusServingStudentStop
+    ? (roadNavData?.estimatedMinutes || busData?.distance?.estimatedMinutes || 0)
+    : 0;
 
   // Dynamic Trip Type and Smart Trip Metadata
   const activeTrip = busData?.activeTrip || selectedBus?.activeTrip;
@@ -539,12 +520,13 @@ export const StudentDashboard: React.FC = () => {
       ? (user?.college?.name ? `${user.college.name} Gate` : 'SRGEC College Gate')
       : (selectedBus?.route?.boardingPoints?.[0]?.name || 'Origin Village / Depot'));
 
-  const routeBoardingPoints = selectedBus?.route?.boardingPoints || (isBusServingStudentStop && student?.boardingPoint ? [student.boardingPoint] : []);
+  const routeBoardingPoints = selectedBus?.route?.boardingPoints || [];
   const villageStops = routeBoardingPoints.filter(
     (s) =>
       !s.name.toLowerCase().includes('college') &&
       !s.name.toLowerCase().includes('campus') &&
-      !s.name.toLowerCase().includes('gate')
+      !s.name.toLowerCase().includes('gate') &&
+      !s.name.toLowerCase().includes('srgec')
   );
   const lastVillageStop = villageStops.length > 0 ? villageStops[villageStops.length - 1] : (routeBoardingPoints.length > 0 ? routeBoardingPoints[routeBoardingPoints.length - 1] : null);
 
@@ -554,7 +536,7 @@ export const StudentDashboard: React.FC = () => {
       : (activeTrip?.destinationName && !activeTrip.destinationName.toLowerCase().includes('college') && !activeTrip.destinationName.toLowerCase().includes('final depot'))
       ? activeTrip.destinationName
       : (isReturnTrip
-          ? (lastVillageStop ? `${lastVillageStop.name} (Terminus)` : (isBusServingStudentStop && student?.boardingPoint?.name ? `${student.boardingPoint.name} (Terminus)` : 'Route Terminus'))
+          ? (lastVillageStop ? `${lastVillageStop.name} (Terminus)` : (isBusServingStudentStop && student?.boardingPoint?.name ? `${student.boardingPoint.name} (Terminus)` : (selectedBus?.route?.name ? `${selectedBus.route.name} Terminus` : 'Route Terminus')))
           : (user?.college?.name ? `${user.college.name} Gate` : 'SRGEC College Gate'));
 
   const isCoordInAP = (lat?: number, lng?: number) => {
@@ -1164,7 +1146,11 @@ export const StudentDashboard: React.FC = () => {
                                 : 'BOARDING_POINT')
                         }
                         routeStops={selectedBus?.route?.boardingPoints || []}
-                        onRoadRouteCalculated={(nav) => setRoadNavData(nav)}
+                        onRoadRouteCalculated={(nav) => {
+                          if (isBusServingStudentStop) {
+                            setRoadNavData(nav);
+                          }
+                        }}
                         className="h-[380px] sm:h-[460px] lg:h-[520px] w-full"
                         zoom={14}
                         show2kmCircle={isBusServingStudentStop && navigationTarget === 'BOARDING_POINT'}

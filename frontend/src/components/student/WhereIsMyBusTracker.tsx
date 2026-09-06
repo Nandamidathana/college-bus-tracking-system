@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { BoardingPoint, Route, College } from '../../types';
+import { extractDistinctiveTokens } from '../../utils/routeMatching';
 import {
   CheckCircle2,
   Clock,
@@ -157,26 +158,33 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
 
       let isStudentStop = false;
       if (studentBoardingPoint) {
-        if (studentBoardingPoint.id && studentBoardingPoint.id === s.id) {
+        if (studentBoardingPoint.id && s.id && studentBoardingPoint.id === s.id) {
           isStudentStop = true;
         } else {
           const bpName = (studentBoardingPoint.name || '').toLowerCase().trim();
           const sName = (s.name || '').toLowerCase().trim();
-          if (bpName && sName) {
-            if (bpName === sName || bpName.includes(sName) || sName.includes(bpName)) {
+          const isCollegeStop =
+            sName.includes('college') ||
+            sName.includes('campus') ||
+            sName.includes('srgec') ||
+            sName.includes('gate');
+
+          if (!isCollegeStop && bpName && sName) {
+            if (bpName === sName) {
               isStudentStop = true;
             } else {
-              const bpWords = bpName.split(/[\s,/-]+/);
-              const sWords = sName.split(/[\s,/-]+/);
-              if (sWords.some((w) => w.length >= 4 && bpWords.includes(w))) {
-                isStudentStop = true;
+              const bpTokens = extractDistinctiveTokens(bpName);
+              const sTokens = extractDistinctiveTokens(sName);
+              if (bpTokens.length > 0 && sTokens.length > 0) {
+                isStudentStop = bpTokens.some((bpToken) =>
+                  sTokens.some(
+                    (sToken) =>
+                      sToken === bpToken ||
+                      (bpToken.length >= 5 && sToken.includes(bpToken)) ||
+                      (sToken.length >= 5 && bpToken.includes(sToken))
+                  )
+                );
               }
-            }
-          }
-          if (!isStudentStop && studentBoardingPoint.latitude && studentBoardingPoint.longitude && s.latitude && s.longitude) {
-            const dist = getDistanceMeters(studentBoardingPoint.latitude, studentBoardingPoint.longitude, s.latitude, s.longitude);
-            if (dist <= 900) {
-              isStudentStop = true;
             }
           }
         }
