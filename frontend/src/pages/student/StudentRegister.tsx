@@ -109,8 +109,8 @@ export const StudentRegister: React.FC = () => {
               <Compass className="w-7 h-7" />
             </div>
           </Link>
-          <h2 className="text-3xl font-black tracking-tight drop-shadow-sm card-title">Student Registration</h2>
-          <p className="text-sm font-semibold subtext-muted">
+          <h2 className="text-3xl font-black tracking-tight drop-shadow-sm text-slate-900 dark:text-white card-title">Student Registration</h2>
+          <p className="text-sm font-semibold subtext-muted text-slate-600 dark:text-slate-300">
             Select your college and boarding area to track your college bus in real time.
           </p>
         </div>

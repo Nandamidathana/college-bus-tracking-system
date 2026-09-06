@@ -20,6 +20,18 @@
     --accent-purple: #7c3aed;
   }
 
+  html:not(.light-theme),
+  body:not(.light-theme) {
+    background-color: #0b0f19 !important;
+    color: #f8fafc !important;
+  }
+
+  html.light-theme,
+  body.light-theme {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+  }
+
   body {
     margin: 0;
     padding: 0;
@@ -44,8 +56,8 @@
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #64748b;
-    color: #0f172a;
-    background-color: #f8fafc;
+    color: #0f172a !important;
+    background-color: #f8fafc !important;
   }
 
   /* Form & Interactive Ergonomics (min 44px touch targets on mobile) */
@@ -165,46 +177,207 @@
 }
 
 /* ==========================================================================
-   TYPOGRAPHY & CONTRAST
+   HIGH-CONTRAST TYPOGRAPHY & HERO GRADIENTS
    ========================================================================== */
 body:not(.light-theme) h1,
 body:not(.light-theme) h2,
 body:not(.light-theme) h3,
 body:not(.light-theme) h4,
 body:not(.light-theme) h5,
-body:not(.light-theme) h6 {
+body:not(.light-theme) h6,
+body:not(.light-theme) .card-title,
+body:not(.light-theme) .brand-title,
+body:not(.light-theme) .page-title,
+body:not(.light-theme) .form-title {
   color: #ffffff !important;
-  font-weight: 700;
-}
-
-body:not(.light-theme) .card-title {
-  color: #ffffff !important;
-  font-weight: 700;
+  font-weight: 800 !important;
 }
 
 body:not(.light-theme) .card-desc {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
+  font-weight: 500;
 }
 
 body:not(.light-theme) .subtext-muted {
   color: #94a3b8 !important;
+  font-weight: 500;
 }
 
+body:not(.light-theme) .feature-item-text {
+  color: #f1f5f9 !important;
+}
+
+body:not(.light-theme) .form-label {
+  color: #cbd5e1 !important;
+}
+
+/* Light Theme Typography */
 .light-theme h1,
 .light-theme h2,
 .light-theme h3,
 .light-theme h4,
 .light-theme h5,
 .light-theme h6,
-.light-theme .card-title {
+.light-theme .card-title,
+.light-theme .brand-title,
+.light-theme .page-title,
+.light-theme .form-title {
   color: #0f172a !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
 }
 
-.light-theme .card-desc,
+.light-theme .card-desc {
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
 .light-theme .subtext-muted {
   color: #475569 !important;
   font-weight: 500 !important;
+}
+
+.light-theme .feature-item-text {
+  color: #1e293b !important;
+}
+
+.light-theme .form-label {
+  color: #334155 !important;
+}
+
+/* Dynamic Hero Gradient Text */
+.hero-gradient-text {
+  background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  font-weight: 900;
+}
+
+.light-theme .hero-gradient-text {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  font-weight: 900;
+}
+
+/* Status Pill in Hero */
+.hero-status-pill {
+  background: #131c31;
+  border: 1px solid #2d3f66;
+  color: #38bdf8;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .hero-status-pill {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Card Icons */
+.card-icon-blue {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(37, 99, 235, 0.35));
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
+.light-theme .card-icon-blue {
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  color: #0284c7;
+}
+
+.card-icon-emerald {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(13, 148, 136, 0.35));
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: #34d399;
+}
+
+.light-theme .card-icon-emerald {
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+}
+
+.card-icon-purple {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(124, 58, 237, 0.35));
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  color: #c084fc;
+}
+
+.light-theme .card-icon-purple {
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  color: #7c3aed;
+}
+
+/* Secondary Portal Buttons */
+.btn-secondary-blue {
+  background-color: #1a2540;
+  border: 1px solid #2d3f66;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.btn-secondary-blue:hover {
+  background-color: #233253;
+  color: #7dd3fc;
+}
+
+.light-theme .btn-secondary-blue {
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0284c7;
+}
+
+.light-theme .btn-secondary-blue:hover {
+  background-color: #e0f2fe;
+}
+
+.btn-secondary-emerald {
+  background-color: #1a2540;
+  border: 1px solid #2d3f66;
+  color: #34d399;
+  font-weight: 700;
+}
+
+.btn-secondary-emerald:hover {
+  background-color: #233253;
+  color: #6ee7b7;
+}
+
+.light-theme .btn-secondary-emerald {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+}
+
+.light-theme .btn-secondary-emerald:hover {
+  background-color: #d1fae5;
+}
+
+.btn-secondary-purple {
+  background-color: #1a2540;
+  border: 1px solid #2d3f66;
+  color: #c084fc;
+  font-weight: 700;
+}
+
+.btn-secondary-purple:hover {
+  background-color: #233253;
+  color: #d8b4fe;
+}
+
+.light-theme .btn-secondary-purple {
+  background-color: #faf5ff;
+  border: 1px solid #e9d5ff;
+  color: #7c3aed;
+}
+
+.light-theme .btn-secondary-purple:hover {
+  background-color: #f3e8ff;
 }
 
 /* ==========================================================================

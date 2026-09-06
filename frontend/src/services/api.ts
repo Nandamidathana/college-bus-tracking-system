@@ -32,23 +32,43 @@ export const api = axios.create({
   timeout: 15000,
 });
 
-// Dynamically resolve role-specific tokens
+// Dynamically resolve role-specific tokens strictly
 api.interceptors.request.use(
   (config) => {
     config.baseURL = getApiBaseUrl();
     const url = config.url || '';
-    let token = localStorage.getItem('bus_tracker_token');
+    let token: string | null = null;
 
     if (url.startsWith('/student')) {
-      token = localStorage.getItem('bus_tracker_student_token') || token;
+      token = localStorage.getItem('bus_tracker_student_token') || localStorage.getItem('bus_tracker_token');
     } else if (url.startsWith('/driver')) {
-      token = localStorage.getItem('bus_tracker_driver_token') || token;
+      token = localStorage.getItem('bus_tracker_driver_token') || localStorage.getItem('bus_tracker_token');
     } else if (url.startsWith('/admin')) {
-      token = localStorage.getItem('bus_tracker_admin_token') || token;
+      // Strictly require admin token or verified admin user token to prevent 403 Forbidden
+      const adminToken = localStorage.getItem('bus_tracker_admin_token');
+      if (adminToken) {
+        token = adminToken;
+      } else {
+        const storedUser = localStorage.getItem('bus_tracker_user');
+        if (storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            if (parsed.role === 'ADMIN') {
+              token = localStorage.getItem('bus_tracker_token');
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+    } else {
+      token = localStorage.getItem('bus_tracker_token');
     }
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
     }
     return config;
   },
@@ -59,7 +79,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 403 && error.config?.url?.startsWith('/admin')) {
-      console.warn('Admin route 403 Forbidden: User is not logged in as Admin.');
+      console.warn('Admin route 403 Forbidden: User is not authorized as Admin.');
     }
     return Promise.reject(error);
   }

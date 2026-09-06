@@ -37,14 +37,14 @@ export const LandingPage: React.FC = () => {
             <span>Live GPS Campus Transport System</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight drop-shadow-sm">
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tight drop-shadow-sm text-slate-900 dark:text-white">
             Track Your College Bus{' '}
             <span className="hero-gradient-text block sm:inline mt-1 sm:mt-0">
               In Real Time
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-semibold subtext-muted">
+          <p className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-semibold subtext-muted text-slate-600 dark:text-slate-300">
             Never miss your morning pickup or wait aimlessly at the bus stop. Accurate live GPS tracking, exact turn-by-turn road distances, and instant arrival alerts.
           </p>
         </div>
