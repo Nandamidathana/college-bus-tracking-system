@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 're
 import L from 'leaflet';
 import { useAuth } from '../../context/AuthContext';
 import { studentApi } from '../../services/api';
-import { searchLocation, reverseGeocode, GeocodeResult } from '../../services/geocoding';
+import { searchLocation, reverseGeocode, getExactCoordinates, GeocodeResult } from '../../services/geocoding';
 import {
   User,
   School,
@@ -278,19 +278,26 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     setErrorMsg('');
     setSuccessMsg('');
 
+    const bpName = boardingPointName.trim() || 'Gudivada Bus Stand';
     let finalLat = parseFloat(String(latitude));
     let finalLng = parseFloat(String(longitude));
 
-    if (isNaN(finalLat) || isNaN(finalLng)) {
-      finalLat = 16.3496;
-      finalLng = 81.0498;
+    if (isNaN(finalLat) || isNaN(finalLng) || (finalLat === 16.35 && finalLng === 80.62)) {
+      const match = await getExactCoordinates(bpName);
+      if (match) {
+        finalLat = match.latitude;
+        finalLng = match.longitude;
+      } else {
+        finalLat = 16.4321;
+        finalLng = 80.9976;
+      }
     }
 
     try {
       const payload: any = {
         name: name.trim(),
         village: village.trim(),
-        boardingPointName: boardingPointName.trim() || 'Himaja Boys Hostel, Gudlavalleru',
+        boardingPointName: bpName,
         latitude: finalLat,
         longitude: finalLng,
       };

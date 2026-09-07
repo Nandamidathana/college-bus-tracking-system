@@ -2,6 +2,9 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/prisma';
 import { generateToken } from '../middleware/auth';
+import { geocodeLocation } from '../services/geocoding.service';
+import { extractDistinctiveTokens } from '../utils/routeMatching';
+import { calculateDistanceMeters } from '../utils/haversine';
 
 const router = Router();
 
@@ -194,8 +197,13 @@ router.post('/student/register', async (req: Request, res: Response) => {
     // If student is registering with a new custom college with live GPS location
     if (!finalCollegeId && newCollegeName) {
       const cleanCode = newCollegeName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase() + '_' + Math.floor(100 + Math.random() * 900);
-      const colLat = collegeLatitude !== undefined ? parseFloat(String(collegeLatitude)) : parseFloat(String(latitude || 16.355));
-      const colLng = collegeLongitude !== undefined ? parseFloat(String(collegeLongitude)) : parseFloat(String(longitude || 80.625));
+      const geocodedCol = await geocodeLocation(newCollegeName.trim());
+      const colLat = collegeLatitude !== undefined && !isNaN(parseFloat(String(collegeLatitude)))
+        ? parseFloat(String(collegeLatitude))
+        : (geocodedCol?.latitude || 16.35068);
+      const colLng = collegeLongitude !== undefined && !isNaN(parseFloat(String(collegeLongitude)))
+        ? parseFloat(String(collegeLongitude))
+        : (geocodedCol?.longitude || 81.04273);
 
       const newCollege = await prisma.college.create({
         data: {
@@ -203,7 +211,7 @@ router.post('/student/register', async (req: Request, res: Response) => {
           code: cleanCode,
           latitude: colLat,
           longitude: colLng,
-          address: `${newCollegeName.trim()} Campus`,
+          address: geocodedCol?.address || `${newCollegeName.trim()} Campus`,
           routes: {
             create: {
               name: `${newCollegeName.trim()} Route 1`,
@@ -254,36 +262,91 @@ router.post('/student/register', async (req: Request, res: Response) => {
       });
     }
 
-    let finalRouteId = routeId;
-    if (!finalRouteId) {
-      if (college.routes && college.routes.length > 0) {
-        finalRouteId = college.routes[0].id;
+    const bpName = boardingPointName ? boardingPointName.trim() : (village ? village.trim() : 'My Boarding Stop');
+    let bpLat = latitude !== undefined && !isNaN(parseFloat(String(latitude))) ? parseFloat(String(latitude)) : 0;
+    let bpLng = longitude !== undefined && !isNaN(parseFloat(String(longitude))) ? parseFloat(String(longitude)) : 0;
+
+    if ((bpLat === 0 || bpLng === 0 || (bpLat === 16.35 && bpLng === 80.62) || (bpLat === 16.355 && bpLng === 80.625)) && bpName) {
+      const geocoded = await geocodeLocation(bpName);
+      if (geocoded) {
+        bpLat = geocoded.latitude;
+        bpLng = geocoded.longitude;
       } else {
-        const newRoute = await prisma.route.create({
-          data: {
-            name: 'Campus Express Route 1',
-            routeNumber: 'ROUTE-01',
-            collegeId: finalCollegeId,
-          },
-        });
-        finalRouteId = newRoute.id;
+        bpLat = college.latitude || 16.35068;
+        bpLng = college.longitude || 81.04273;
       }
     }
 
+    // Match the correct route for this boarding point or village
+    let finalRouteId = routeId;
     let finalBoardingPointId = boardingPointId;
 
-    // If custom boarding point with coordinates provided
-    if (!finalBoardingPointId || finalBoardingPointId === 'CUSTOM') {
-      const bpLat = latitude !== undefined ? parseFloat(String(latitude)) : college.latitude;
-      const bpLng = longitude !== undefined ? parseFloat(String(longitude)) : college.longitude;
-      const bpName = boardingPointName ? boardingPointName.trim() : 'My Boarding Stop';
+    if (college.routes && college.routes.length > 0) {
+      const tokens = extractDistinctiveTokens(bpName);
+      let matchedRoute = null;
+      let matchedStop = null;
 
+      // 1. Direct Stop Name Match
+      for (const r of college.routes) {
+        for (const s of (r.boardingPoints || [])) {
+          const sTokens = extractDistinctiveTokens(s.name);
+          if (tokens.length > 0 && sTokens.some((st: string) => tokens.includes(st) || bpName.toLowerCase().includes(st))) {
+            matchedRoute = r;
+            matchedStop = s;
+            break;
+          }
+        }
+        if (matchedRoute) break;
+      }
+
+      // 2. Route Name Match
+      if (!matchedRoute) {
+        for (const r of college.routes) {
+          const rTokens = extractDistinctiveTokens(r.name);
+          if (tokens.some((t: string) => rTokens.includes(t) || r.name.toLowerCase().includes(t))) {
+            matchedRoute = r;
+            matchedStop = (r.boardingPoints || [])[0] || null;
+            break;
+          }
+        }
+      }
+
+      // 3. Proximity Match
+      if (!matchedRoute && bpLat !== 0 && bpLng !== 0) {
+        let minDist = Infinity;
+        for (const r of college.routes) {
+          for (const s of (r.boardingPoints || [])) {
+            if (s.name.toLowerCase().includes('college') || s.name.toLowerCase().includes('srgec')) continue;
+            const d = calculateDistanceMeters(bpLat, bpLng, s.latitude, s.longitude);
+            if (d < minDist) {
+              minDist = d;
+              matchedRoute = r;
+              matchedStop = s;
+            }
+          }
+        }
+      }
+
+      if (matchedRoute) {
+        finalRouteId = matchedRoute.id;
+        if (matchedStop) {
+          finalBoardingPointId = matchedStop.id;
+        }
+      }
+    }
+
+    if (!finalRouteId) {
+      finalRouteId = college.routes && college.routes.length > 0 ? college.routes[0].id : null;
+    }
+
+    // If custom boarding point still needed
+    if (!finalBoardingPointId || finalBoardingPointId === 'CUSTOM') {
       const newPoint = await prisma.boardingPoint.create({
         data: {
           name: bpName,
           latitude: bpLat,
           longitude: bpLng,
-          routeId: finalRouteId,
+          routeId: finalRouteId!,
           sequence: 99,
         },
       });
@@ -430,8 +493,9 @@ router.post('/driver/register', async (req: Request, res: Response) => {
 
     if (!finalCollegeId && newCollegeName) {
       const cleanCode = newCollegeName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase() + '_' + Math.floor(100 + Math.random() * 900);
-      const colLat = latitude !== undefined ? parseFloat(String(latitude)) : 16.355;
-      const colLng = longitude !== undefined ? parseFloat(String(longitude)) : 80.625;
+      const geocodedCol = await geocodeLocation(newCollegeName.trim());
+      const colLat = latitude !== undefined && !isNaN(parseFloat(String(latitude))) ? parseFloat(String(latitude)) : (geocodedCol?.latitude || 16.35068);
+      const colLng = longitude !== undefined && !isNaN(parseFloat(String(longitude))) ? parseFloat(String(longitude)) : (geocodedCol?.longitude || 81.04273);
 
       const newCollege = await prisma.college.create({
         data: {
@@ -439,7 +503,7 @@ router.post('/driver/register', async (req: Request, res: Response) => {
           code: cleanCode,
           latitude: colLat,
           longitude: colLng,
-          address: `${newCollegeName.trim()} Campus`,
+          address: geocodedCol?.address || `${newCollegeName.trim()} Campus`,
         },
       });
       finalCollegeId = newCollege.id;

@@ -16,13 +16,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(() => {
-    const saved = localStorage.getItem('bus_tracker_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('bus_tracker_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem('bus_tracker_token');
   });
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Background sync helper
+  const syncFreshProfile = async (currentToken: string, currentUser: AuthUser) => {
+    try {
+      if (currentUser.role === 'STUDENT') {
+        const res = await studentApi.getProfile();
+        if (res.data.success && res.data.student) {
+          const updatedUser: AuthUser = {
+            ...currentUser,
+            name: res.data.student.user?.name || currentUser.name,
+            student: res.data.student,
+            college: res.data.student.college || currentUser.college,
+          };
+          setUser(updatedUser);
+          localStorage.setItem('bus_tracker_user', JSON.stringify(updatedUser));
+        }
+      } else if (currentUser.role === 'DRIVER') {
+        const res = await driverApi.getProfile();
+        if (res.data.success && res.data.driver) {
+          const updatedUser: AuthUser = {
+            ...currentUser,
+            name: res.data.driver.driverName || currentUser.name,
+            driver: res.data.driver,
+            college: res.data.driver.college || currentUser.college,
+          };
+          setUser(updatedUser);
+          localStorage.setItem('bus_tracker_user', JSON.stringify(updatedUser));
+        }
+      }
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        console.warn('Session expired or invalid token detected during background sync.');
+        logout();
+      }
+    }
+  };
 
   useEffect(() => {
     const initAuth = async () => {
@@ -35,6 +75,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(parsedUser);
           setToken(savedToken);
           connectSocket(savedToken);
+
+          // Perform non-blocking silent sync with database to retrieve fresh data
+          syncFreshProfile(savedToken, parsedUser);
         } catch (e) {
           console.error('Failed to parse stored user:', e);
           logout();
@@ -44,6 +87,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initAuth();
+
+    // Auto-refresh when tab gains focus or device reconnects to network
+    const handleFocusOrOnline = () => {
+      const savedToken = localStorage.getItem('bus_tracker_token');
+      const savedUser = localStorage.getItem('bus_tracker_user');
+      if (savedToken && savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          syncFreshProfile(savedToken, parsed);
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocusOrOnline);
+    window.addEventListener('online', handleFocusOrOnline);
+
+    return () => {
+      window.removeEventListener('focus', handleFocusOrOnline);
+      window.removeEventListener('online', handleFocusOrOnline);
+    };
   }, []);
 
   const login = (newToken: string, newUser: AuthUser) => {
@@ -75,34 +140,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshUser = async () => {
-    if (!token || !user) return;
-    try {
-      if (user.role === 'STUDENT') {
-        const res = await studentApi.getProfile();
-        if (res.data.success && res.data.student) {
-          const updatedUser: AuthUser = {
-            ...user,
-            student: res.data.student,
-            college: res.data.student.college,
-          };
-          setUser(updatedUser);
-          localStorage.setItem('bus_tracker_user', JSON.stringify(updatedUser));
-        }
-      } else if (user.role === 'DRIVER') {
-        const res = await driverApi.getProfile();
-        if (res.data.success && res.data.driver) {
-          const updatedUser: AuthUser = {
-            ...user,
-            driver: res.data.driver,
-            college: res.data.driver.college,
-          };
-          setUser(updatedUser);
-          localStorage.setItem('bus_tracker_user', JSON.stringify(updatedUser));
-        }
-      }
-    } catch (e) {
-      console.error('Failed to refresh user:', e);
-    }
+    const curToken = token || localStorage.getItem('bus_tracker_token');
+    const curUser = user || (localStorage.getItem('bus_tracker_user') ? JSON.parse(localStorage.getItem('bus_tracker_user')!) : null);
+    if (!curToken || !curUser) return;
+    await syncFreshProfile(curToken, curUser);
   };
 
   return (

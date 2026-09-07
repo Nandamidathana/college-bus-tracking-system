@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { searchLocation, reverseGeocode, GeocodeResult } from '../../services/geocoding';
+import { searchLocation, reverseGeocode, getExactCoordinates, GeocodeResult } from '../../services/geocoding';
 import { MapPin, Crosshair, Search, Loader2, Check } from 'lucide-react';
 
 interface LocationInputProps {
@@ -68,12 +68,23 @@ export const LocationInput: React.FC<LocationInputProps> = ({
           const best = results[0];
           onChange(text, best.latitude, best.longitude);
         }
-      }, 350);
+      }, 250);
     } else {
       setSuggestions([]);
       setLoading(false);
       setIsOpen(false);
     }
+  };
+
+  const handleBlur = async () => {
+    setTimeout(async () => {
+      if (inputValue.trim().length >= 2) {
+        const match = await getExactCoordinates(inputValue);
+        if (match) {
+          onChange(inputValue.trim(), match.latitude, match.longitude);
+        }
+      }
+    }, 200);
   };
 
   // Select a suggestion
@@ -138,6 +149,7 @@ export const LocationInput: React.FC<LocationInputProps> = ({
           type="text"
           value={inputValue}
           onChange={handleInputChange}
+          onBlur={handleBlur}
           onFocus={() => suggestions.length > 0 && setIsOpen(true)}
           placeholder={placeholder}
           required={required}

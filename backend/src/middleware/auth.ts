@@ -21,7 +21,7 @@ declare global {
 }
 
 export function generateToken(payload: AuthUser): string {
-  return jwt.sign(payload, ENV.JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign(payload, ENV.JWT_SECRET, { expiresIn: '365d' });
 }
 
 export function verifyToken(token: string): AuthUser | null {

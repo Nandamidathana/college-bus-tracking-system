@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
 import { calculateDistanceMeters, formatDistance, estimateTravelTimeMinutes } from '../utils/haversine';
-import { checkBusServesBoardingStop } from '../utils/routeMatching';
+import { checkBusServesBoardingStop, extractDistinctiveTokens } from '../utils/routeMatching';
+import { geocodeLocation } from '../services/geocoding.service';
 import { ENV } from '../config/env';
 
 const router = Router();
@@ -39,6 +40,79 @@ router.get('/profile', async (req: Request, res: Response) => {
   }
 });
 
+// Helper: Finds the best matching route and stop for a student's boarding point or village
+async function findMatchingRouteAndStop(
+  collegeId: string,
+  boardingPointName: string,
+  lat?: number,
+  lng?: number,
+  preferredRouteId?: string
+) {
+  const routes = await prisma.route.findMany({
+    where: { collegeId },
+    include: {
+      boardingPoints: { orderBy: { sequence: 'asc' } },
+      buses: true,
+    },
+  });
+
+  if (routes.length === 0) return { routeId: preferredRouteId || '', boardingPointId: '', boardingPoint: null };
+
+  const cleanName = (boardingPointName || '').toLowerCase().trim();
+  const tokens = extractDistinctiveTokens(cleanName);
+
+  // 1. Direct Stop Name Match in any route of this college (e.g. "vuyyuru", "gudivada", "pedana", "chilakalapudi", "benz circle")
+  for (const route of routes) {
+    for (const stop of route.boardingPoints) {
+      const stopClean = stop.name.toLowerCase().trim();
+      const stopTokens = extractDistinctiveTokens(stopClean);
+
+      // Skip college destination stops when matching student boarding points
+      if (stopClean.includes('college') || stopClean.includes('srgec') || stopClean.includes('campus')) continue;
+
+      if (stopClean === cleanName || (tokens.length > 0 && stopTokens.some((st) => tokens.includes(st) || cleanName.includes(st) || stopClean.includes(tokens[0])))) {
+        return { routeId: route.id, boardingPointId: stop.id, boardingPoint: stop };
+      }
+    }
+  }
+
+  // 2. Route Name match (e.g. "vijayawada", "gudivada", "machilipatnam")
+  for (const route of routes) {
+    const routeTokens = extractDistinctiveTokens(route.name);
+    if (tokens.some((t) => routeTokens.includes(t) || route.name.toLowerCase().includes(t))) {
+      const stop = route.boardingPoints[0] || null;
+      return { routeId: route.id, boardingPointId: stop ? stop.id : '', boardingPoint: stop };
+    }
+  }
+
+  // 3. Proximity-based match if coordinates provided
+  if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+    let closestRoute = routes[0];
+    let closestStop = routes[0].boardingPoints[0] || null;
+    let minDistance = Infinity;
+
+    for (const route of routes) {
+      for (const stop of route.boardingPoints) {
+        if (stop.name.toLowerCase().includes('college') || stop.name.toLowerCase().includes('srgec') || stop.name.toLowerCase().includes('campus')) continue;
+        const dist = calculateDistanceMeters(lat, lng, stop.latitude, stop.longitude);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestRoute = route;
+          closestStop = stop;
+        }
+      }
+    }
+
+    if (closestStop) {
+      return { routeId: closestRoute.id, boardingPointId: closestStop.id, boardingPoint: closestStop };
+    }
+  }
+
+  const selectedRoute = (preferredRouteId && routes.find((r) => r.id === preferredRouteId)) || routes[0];
+  const selectedStop = selectedRoute.boardingPoints[0] || null;
+  return { routeId: selectedRoute.id, boardingPointId: selectedStop ? selectedStop.id : '', boardingPoint: selectedStop };
+}
+
 // PUT /api/student/profile - Edit student profile details and boarding point
 router.put('/profile', async (req: Request, res: Response) => {
   try {
@@ -61,34 +135,39 @@ router.put('/profile', async (req: Request, res: Response) => {
       });
     }
 
-    let finalBoardingPointId = student.boardingPointId;
+    let finalLat = latitude !== undefined ? parseFloat(String(latitude)) : NaN;
+    let finalLng = longitude !== undefined ? parseFloat(String(longitude)) : NaN;
+    const targetBpName = boardingPointName ? boardingPointName.trim() : (village ? village.trim() : '');
 
-    // 2. If new coordinates provided or custom stop
-    if (latitude !== undefined && longitude !== undefined) {
-      if (student.boardingPointId) {
-        await prisma.boardingPoint.update({
-          where: { id: student.boardingPointId },
-          data: {
-            ...(boardingPointName ? { name: boardingPointName.trim() } : {}),
-            latitude: parseFloat(String(latitude)),
-            longitude: parseFloat(String(longitude)),
-            ...(routeId ? { routeId } : {}),
-          },
-        });
-      } else {
+    // Check if coords are dummy or missing
+    const isDummyCoord = isNaN(finalLat) || isNaN(finalLng) || (finalLat === 16.35 && finalLng === 80.62) || (finalLat === 16.355 && finalLng === 80.625);
+
+    if (isDummyCoord && targetBpName) {
+      const geocoded = await geocodeLocation(targetBpName);
+      if (geocoded) {
+        finalLat = geocoded.latitude;
+        finalLng = geocoded.longitude;
+      }
+    }
+
+    // 2. Find the correct matching route and stop
+    const match = await findMatchingRouteAndStop(student.collegeId, targetBpName || student.village, finalLat, finalLng, routeId);
+    let finalRouteId = match.routeId || routeId || student.routeId;
+    let finalBoardingPointId = match.boardingPointId || boardingPointId || student.boardingPointId;
+
+    if (!finalBoardingPointId || finalBoardingPointId === 'CUSTOM') {
+      if (!isNaN(finalLat) && !isNaN(finalLng)) {
         const newBp = await prisma.boardingPoint.create({
           data: {
-            name: boardingPointName ? boardingPointName.trim() : 'My Boarding Stop',
-            latitude: parseFloat(String(latitude)),
-            longitude: parseFloat(String(longitude)),
-            routeId: routeId || student.routeId,
+            name: targetBpName || 'My Boarding Stop',
+            latitude: finalLat,
+            longitude: finalLng,
+            routeId: finalRouteId,
             sequence: 99,
           },
         });
         finalBoardingPointId = newBp.id;
       }
-    } else if (boardingPointId && boardingPointId !== 'CUSTOM') {
-      finalBoardingPointId = boardingPointId;
     }
 
     // 3. Update student record
@@ -96,7 +175,7 @@ router.put('/profile', async (req: Request, res: Response) => {
       where: { id: student.id },
       data: {
         ...(village ? { village: village.trim() } : {}),
-        ...(routeId ? { routeId } : {}),
+        routeId: finalRouteId,
         boardingPointId: finalBoardingPointId,
       },
       include: {
@@ -127,9 +206,8 @@ router.put('/profile', async (req: Request, res: Response) => {
 router.put('/boarding-point', async (req: Request, res: Response) => {
   try {
     const { name, latitude, longitude } = req.body;
-    if (latitude === undefined || longitude === undefined) {
-      return res.status(400).json({ error: 'Latitude and longitude are required.' });
-    }
+    let finalLat = latitude !== undefined ? parseFloat(String(latitude)) : NaN;
+    let finalLng = longitude !== undefined ? parseFloat(String(longitude)) : NaN;
 
     const student = await prisma.student.findFirst({
       where: { userId: req.user!.userId },
@@ -140,29 +218,51 @@ router.put('/boarding-point', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Student not found.' });
     }
 
+    const bpName = name ? name.trim() : (student.boardingPoint?.name || '');
+
+    if (isNaN(finalLat) || isNaN(finalLng) || (finalLat === 16.35 && finalLng === 80.62) || (finalLat === 16.355 && finalLng === 80.625)) {
+      if (bpName) {
+        const geocoded = await geocodeLocation(bpName);
+        if (geocoded) {
+          finalLat = geocoded.latitude;
+          finalLng = geocoded.longitude;
+        }
+      }
+    }
+
+    if (isNaN(finalLat) || isNaN(finalLng)) {
+      return res.status(400).json({ error: 'Latitude and longitude are required.' });
+    }
+
+    const match = await findMatchingRouteAndStop(student.collegeId, bpName, finalLat, finalLng, student.routeId);
+    let finalRouteId = match.routeId || student.routeId;
     let bp;
-    if (student.boardingPointId) {
-      bp = await prisma.boardingPoint.update({
-        where: { id: student.boardingPointId },
+
+    if (match.boardingPointId) {
+      bp = await prisma.boardingPoint.findUnique({ where: { id: match.boardingPointId } });
+      await prisma.student.update({
+        where: { id: student.id },
         data: {
-          name: name ? name.trim() : student.boardingPoint.name,
-          latitude: parseFloat(String(latitude)),
-          longitude: parseFloat(String(longitude)),
+          boardingPointId: match.boardingPointId,
+          routeId: finalRouteId,
         },
       });
     } else {
       bp = await prisma.boardingPoint.create({
         data: {
-          name: name ? name.trim() : 'My Live Location',
-          latitude: parseFloat(String(latitude)),
-          longitude: parseFloat(String(longitude)),
-          routeId: student.routeId,
+          name: bpName || 'My Live Location',
+          latitude: finalLat,
+          longitude: finalLng,
+          routeId: finalRouteId,
           sequence: 99,
         },
       });
       await prisma.student.update({
         where: { id: student.id },
-        data: { boardingPointId: bp.id },
+        data: {
+          boardingPointId: bp.id,
+          routeId: finalRouteId,
+        },
       });
     }
 

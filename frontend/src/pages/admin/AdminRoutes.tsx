@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../services/api';
 import { Route, BoardingPoint } from '../../types';
-import { Route as RouteIcon, Plus, Trash2, Edit2, MapPin, AlertCircle, Save } from 'lucide-react';
+import { PlaceAutocompleteInput } from '../../components/common/PlaceAutocompleteInput';
+import { getExactCoordinates } from '../../services/geocoding';
+import { Route as RouteIcon, Plus, Trash2, Edit2, MapPin, AlertCircle, Save, CheckCircle2 } from 'lucide-react';
 
 export const AdminRoutes: React.FC = () => {
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -13,7 +15,7 @@ export const AdminRoutes: React.FC = () => {
   const [routeName, setRouteName] = useState('');
   const [routeNumber, setRouteNumber] = useState('');
   const [boardingPoints, setBoardingPoints] = useState<
-    Array<{ name: string; latitude: number | string; longitude: number | string; sequence: number }>
+    Array<{ name: string; address?: string; latitude: number; longitude: number; sequence: number }>
   >([]);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -41,8 +43,20 @@ export const AdminRoutes: React.FC = () => {
     setRouteName('');
     setRouteNumber('');
     setBoardingPoints([
-      { name: 'Start Bus Stand', latitude: 16.3502, longitude: 80.6210, sequence: 1 },
-      { name: 'College Campus Main Gate', latitude: 16.3550, longitude: 80.6250, sequence: 2 },
+      {
+        name: 'Machilipatnam RTC Bus Stand',
+        address: 'National Highway 216, Machilipatnam, Andhra Pradesh',
+        latitude: 16.1875,
+        longitude: 81.1389,
+        sequence: 1,
+      },
+      {
+        name: 'Seshadri Rao Gudlavalleru Engineering College (SRGEC)',
+        address: 'SRGEC Campus, Gudlavalleru, Krishna District - 521356',
+        latitude: 16.35068,
+        longitude: 81.04273,
+        sequence: 2,
+      },
     ]);
     setFormError('');
     setIsModalOpen(true);
@@ -68,9 +82,9 @@ export const AdminRoutes: React.FC = () => {
     setBoardingPoints([
       ...boardingPoints,
       {
-        name: `Stop #${boardingPoints.length + 1}`,
-        latitude: 16.35,
-        longitude: 80.62,
+        name: '',
+        latitude: 0,
+        longitude: 0,
         sequence: boardingPoints.length + 1,
       },
     ]);
@@ -78,13 +92,18 @@ export const AdminRoutes: React.FC = () => {
 
   const handleRemoveStop = (index: number) => {
     const updated = boardingPoints.filter((_, i) => i !== index);
-    // Re-index sequences
     setBoardingPoints(updated.map((s, idx) => ({ ...s, sequence: idx + 1 })));
   };
 
-  const handleStopChange = (index: number, field: string, value: any) => {
+  const handleStopPlaceSelected = (index: number, place: { name: string; address?: string; latitude: number; longitude: number }) => {
     const updated = [...boardingPoints];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = {
+      ...updated[index],
+      name: place.name,
+      address: place.address,
+      latitude: place.latitude,
+      longitude: place.longitude,
+    };
     setBoardingPoints(updated);
   };
 
@@ -94,15 +113,33 @@ export const AdminRoutes: React.FC = () => {
     setSaving(true);
 
     try {
+      // Validate all stops have names and auto-resolve any missing coordinates
+      const validatedStops = await Promise.all(
+        boardingPoints.map(async (bp, i) => {
+          let lat = parseFloat(String(bp.latitude || 0));
+          let lng = parseFloat(String(bp.longitude || 0));
+
+          if ((lat === 0 || lng === 0 || (lat === 16.35 && lng === 80.62)) && bp.name.trim()) {
+            const resolved = await getExactCoordinates(bp.name.trim());
+            if (resolved) {
+              lat = resolved.latitude;
+              lng = resolved.longitude;
+            }
+          }
+
+          return {
+            name: bp.name.trim(),
+            latitude: lat || 16.35068,
+            longitude: lng || 81.04273,
+            sequence: i + 1,
+          };
+        })
+      );
+
       const payload = {
         name: routeName.trim(),
         routeNumber: routeNumber.trim().toUpperCase(),
-        boardingPoints: boardingPoints.map((bp, i) => ({
-          name: bp.name.trim(),
-          latitude: parseFloat(String(bp.latitude)),
-          longitude: parseFloat(String(bp.longitude)),
-          sequence: i + 1,
-        })),
+        boardingPoints: validatedStops,
       };
 
       if (editingRoute) {
@@ -234,59 +271,50 @@ export const AdminRoutes: React.FC = () => {
               {/* Boarding Points Editor */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-purple-300">
-                    Ordered Boarding Points (GPS Coordinates)
-                  </label>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-purple-300">
+                      Ordered Bus Stops (Automatic Google Places & GPS)
+                    </label>
+                    <p className="text-[10px] text-slate-400">
+                      Search any stop name (e.g. Machilipatnam Bus Stand, Chilakalapudi, Pedana, Kavtharam) to auto-fetch exact GPS coordinates.
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddStop}
-                    className="text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 px-3 py-1 rounded-lg font-bold flex items-center gap-1 transition-colors"
+                    className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all shadow-md shrink-0"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add Stop
                   </button>
                 </div>
 
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
                   {boardingPoints.map((bp, idx) => (
                     <div
                       key={idx}
-                      className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 flex flex-col sm:flex-row items-center gap-2.5"
+                      className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-start gap-2.5 shadow-md"
                     >
-                      <span className="w-6 h-6 rounded-full bg-purple-600/20 text-purple-300 text-xs font-bold flex items-center justify-center shrink-0">
+                      <span className="w-7 h-7 rounded-xl bg-purple-600/30 text-purple-300 text-xs font-black flex items-center justify-center shrink-0 mt-1 border border-purple-500/40">
                         {idx + 1}
                       </span>
-                      <input
-                        type="text"
-                        value={bp.name}
-                        onChange={(e) => handleStopChange(idx, 'name', e.target.value)}
-                        placeholder="Stop Name"
-                        className="flex-1 bg-slate-900 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-xs"
-                        required
-                      />
-                      <input
-                        type="number"
-                        step="any"
-                        value={bp.latitude}
-                        onChange={(e) => handleStopChange(idx, 'latitude', e.target.value)}
-                        placeholder="Latitude"
-                        className="w-full sm:w-28 bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1.5 text-xs font-mono"
-                        required
-                      />
-                      <input
-                        type="number"
-                        step="any"
-                        value={bp.longitude}
-                        onChange={(e) => handleStopChange(idx, 'longitude', e.target.value)}
-                        placeholder="Longitude"
-                        className="w-full sm:w-28 bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1.5 text-xs font-mono"
-                        required
-                      />
+                      <div className="flex-1 min-w-0">
+                        <PlaceAutocompleteInput
+                          value={bp.name}
+                          latitude={bp.latitude}
+                          longitude={bp.longitude}
+                          placeholder={`Search Stop #${idx + 1} name (e.g. Pedana, Chilakalapudi, Machilipatnam...)`}
+                          onChange={(place) => handleStopPlaceSelected(idx, place)}
+                          required
+                          className="w-full"
+                        />
+                      </div>
                       {boardingPoints.length > 2 && (
                         <button
                           type="button"
                           onClick={() => handleRemoveStop(idx)}
-                          className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-xl transition-colors shrink-0 mt-0.5"
+                          title="Remove this stop"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

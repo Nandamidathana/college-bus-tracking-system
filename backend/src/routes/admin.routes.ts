@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
+import { geocodeLocation, lookupRegionalDatabase } from '../services/geocoding.service';
 
 const router = Router();
 
@@ -262,6 +263,61 @@ router.get('/routes', async (req: Request, res: Response) => {
   }
 });
 
+// Helper: Resolve boarding points with high-precision geocoded coordinates
+async function resolveBoardingPointsWithCoords(boardingPoints: any[]) {
+  if (!Array.isArray(boardingPoints)) return [];
+  const resolved = [];
+  for (let idx = 0; idx < boardingPoints.length; idx++) {
+    const bp = boardingPoints[idx];
+    const name = (bp.name || '').trim();
+    let lat = parseFloat(String(bp.latitude));
+    let lng = parseFloat(String(bp.longitude));
+
+    // If coordinates are invalid, missing, or dummy (16.35, 80.62)
+    if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0 || (lat === 16.35 && lng === 80.62) || (lat === 16.355 && lng === 80.625)) {
+      if (name) {
+        const geocoded = await geocodeLocation(name);
+        if (geocoded) {
+          lat = geocoded.latitude;
+          lng = geocoded.longitude;
+        } else {
+          lat = 16.35068;
+          lng = 81.04273;
+        }
+      } else {
+        lat = 16.35068;
+        lng = 81.04273;
+      }
+    }
+
+    resolved.push({
+      name: name || `Stop ${idx + 1}`,
+      latitude: lat,
+      longitude: lng,
+      sequence: bp.sequence || idx + 1,
+    });
+  }
+  return resolved;
+}
+
+// GET /api/admin/geocode?query=...
+router.get('/geocode', async (req: Request, res: Response) => {
+  try {
+    const query = String(req.query.query || '');
+    if (!query) {
+      return res.json({ success: true, results: [] });
+    }
+    const regional = lookupRegionalDatabase(query);
+    if (regional.length > 0) {
+      return res.json({ success: true, results: regional });
+    }
+    const live = await geocodeLocation(query);
+    return res.json({ success: true, results: live ? [live] : [] });
+  } catch (error) {
+    return res.status(500).json({ error: 'Geocoding search failed.' });
+  }
+});
+
 // POST /api/admin/routes
 router.post('/routes', async (req: Request, res: Response) => {
   try {
@@ -272,20 +328,15 @@ router.post('/routes', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Route name and route number are required.' });
     }
 
+    const resolvedStops = await resolveBoardingPointsWithCoords(boardingPoints);
+
     const route = await prisma.route.create({
       data: {
         name: name.trim(),
         routeNumber: routeNumber.trim().toUpperCase(),
         collegeId,
         boardingPoints: {
-          create: Array.isArray(boardingPoints)
-            ? boardingPoints.map((bp: any, idx: number) => ({
-                name: bp.name.trim(),
-                latitude: parseFloat(bp.latitude),
-                longitude: parseFloat(bp.longitude),
-                sequence: bp.sequence || idx + 1,
-              }))
-            : [],
+          create: resolvedStops,
         },
       },
       include: {
@@ -321,16 +372,17 @@ router.put('/routes/:id', async (req: Request, res: Response) => {
       },
     });
 
-    // If boarding points provided, replace them
+    // If boarding points provided, replace them with resolved coordinates
     if (Array.isArray(boardingPoints)) {
+      const resolvedStops = await resolveBoardingPointsWithCoords(boardingPoints);
       await prisma.boardingPoint.deleteMany({ where: { routeId: id } });
-      for (let i = 0; i < boardingPoints.length; i++) {
-        const bp = boardingPoints[i];
+      for (let i = 0; i < resolvedStops.length; i++) {
+        const bp = resolvedStops[i];
         await prisma.boardingPoint.create({
           data: {
-            name: bp.name.trim(),
-            latitude: parseFloat(bp.latitude),
-            longitude: parseFloat(bp.longitude),
+            name: bp.name,
+            latitude: bp.latitude,
+            longitude: bp.longitude,
             sequence: bp.sequence || i + 1,
             routeId: id,
           },

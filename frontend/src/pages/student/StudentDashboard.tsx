@@ -126,8 +126,9 @@ export const StudentDashboard: React.FC = () => {
   }, []);
 
 
-  // 2. Fetch all available buses in college (Do not automatically select a bus)
+  // 2. Fetch fresh user profile & all available buses in college on mount
   useEffect(() => {
+    refreshUser();
     const fetchBuses = async () => {
       try {
         setLoading(true);
@@ -410,7 +411,7 @@ export const StudentDashboard: React.FC = () => {
       const existingName = student?.boardingPoint?.name;
       const targetName = existingName && !existingName.includes('My Live Location')
         ? existingName
-        : 'Himaja Boys Hostel, Gudlavalleru';
+        : (student?.village || 'My Boarding Stop');
 
       const res = await studentApi.updateBoardingPoint({
         name: targetName,

@@ -1,12 +1,7 @@
-export interface GeocodeResult {
-  displayName: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  isVerified?: boolean;
-}
-
+/**
+ * High-Precision Regional Geocoding Database for Andhra Pradesh / Krishna District / Vijayawada
+ * Contains verified real-world GPS coordinates for all college bus route towns, villages, bus stands, and landmarks.
+ */
 export interface GeocodeLocation {
   name: string;
   address: string;
@@ -313,113 +308,62 @@ function scoreMatch(query: string, loc: GeocodeLocation): number {
 }
 
 /**
- * Searches location names using:
- * 1. Verified High-Precision Regional Database (Krishna District / AP)
- * 2. Live Geocoding via Nominatim
+ * Searches the high-precision regional database for matching places
  */
-export async function searchLocation(query: string): Promise<GeocodeResult[]> {
+export function lookupRegionalDatabase(query: string): GeocodeLocation[] {
   if (!query || query.trim().length < 2) return [];
 
-  const results: GeocodeResult[] = [];
-  const seenCoords = new Set<string>();
-
-  // 1. Regional Instant Search with scoring
-  const localMatches = AP_REGIONAL_DATABASE
+  const scored = AP_REGIONAL_DATABASE
     .map((loc) => ({ loc, score: scoreMatch(query, loc) }))
     .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .map((item) => item.loc);
+    .sort((a, b) => b.score - a.score);
 
-  localMatches.forEach((m) => {
-    const key = `${m.latitude.toFixed(3)},${m.longitude.toFixed(3)}`;
-    if (!seenCoords.has(key)) {
-      seenCoords.add(key);
-      results.push({
-        name: m.name,
-        displayName: `${m.name} - ${m.address}`,
-        address: m.address,
-        latitude: m.latitude,
-        longitude: m.longitude,
-        isVerified: true,
-      });
-    }
-  });
+  return scored.map((item) => item.loc);
+}
 
-  // 2. OpenStreetMap Nominatim Live Search for arbitrary addresses
+/**
+ * Geocodes any location name automatically:
+ * Tier 1: Instant high-precision regional lookup
+ * Tier 2: OpenStreetMap Nominatim live search with India / AP bounding
+ */
+export async function geocodeLocation(query: string): Promise<GeocodeLocation | null> {
+  if (!query || query.trim().length < 2) return null;
+
+  // Tier 1: Check regional database
+  const localMatches = lookupRegionalDatabase(query);
+  if (localMatches.length > 0) {
+    return localMatches[0];
+  }
+
+  // Tier 2: Query OpenStreetMap Nominatim with India bounding box
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
       query.trim() + ', Andhra Pradesh, India'
-    )}&countrycodes=in&viewbox=79.5,17.5,82.2,15.5&bounded=0&limit=5&addressdetails=1`;
+    )}&countrycodes=in&viewbox=79.5,17.5,82.2,15.5&bounded=0&limit=3&addressdetails=1`;
 
-    const response = await fetch(url, {
+    const res = await fetch(url, {
       headers: {
         'Accept': 'application/json',
+        'User-Agent': 'CollegeBusTracker/2.0 (contact@srgec.edu)',
       },
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        data.forEach((item: any) => {
-          const lat = parseFloat(item.lat);
-          const lon = parseFloat(item.lon);
-          const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
-          if (!seenCoords.has(key)) {
-            seenCoords.add(key);
-            results.push({
-              name: item.name || item.display_name.split(',')[0],
-              displayName: item.display_name,
-              address: item.display_name,
-              latitude: lat,
-              longitude: lon,
-              isVerified: false,
-            });
-          }
-        });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const item = data[0];
+        return {
+          name: item.name || query.trim(),
+          address: item.display_name,
+          latitude: parseFloat(item.lat),
+          longitude: parseFloat(item.lon),
+          aliases: [query.toLowerCase().trim()],
+        };
       }
     }
   } catch (err) {
-    console.warn('Live geocoding search failed:', err);
+    console.warn('Live geocoding lookup failed:', err);
   }
 
-  return results;
-}
-
-/**
- * Gets exact coordinates for a location name
- */
-export async function getExactCoordinates(name: string): Promise<GeocodeResult | null> {
-  const results = await searchLocation(name);
-  return results.length > 0 ? results[0] : null;
-}
-
-/**
- * Reverse geocode latitude/longitude to address name
- */
-export async function reverseGeocode(latitude: number, longitude: number): Promise<string | null> {
-  // Check regional matches within 400m
-  for (const loc of AP_REGIONAL_DATABASE) {
-    const dLat = Math.abs(loc.latitude - latitude);
-    const dLng = Math.abs(loc.longitude - longitude);
-    if (dLat < 0.004 && dLng < 0.004) {
-      return `${loc.name}, ${loc.address}`;
-    }
-  }
-
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    return data.display_name || data.name || null;
-  } catch (err) {
-    console.warn('Reverse geocoding failed:', err);
-    return null;
-  }
+  return null;
 }
