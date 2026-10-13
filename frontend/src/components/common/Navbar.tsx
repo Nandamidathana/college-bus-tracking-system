@@ -19,11 +19,23 @@ export const Navbar: React.FC = () => {
   const getRoleBadge = (role?: string) => {
     switch (role) {
       case 'ADMIN':
-        return <span className="role-badge-admin px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 shadow-sm"><Shield className="w-3.5 h-3.5" /> Admin</span>;
+        return (
+          <span className="role-badge-admin px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 shadow-sm">
+            <Shield className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" /> Admin
+          </span>
+        );
       case 'DRIVER':
-        return <span className="role-badge-driver px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 shadow-sm"><Navigation className="w-3.5 h-3.5" /> Driver</span>;
+        return (
+          <span className="role-badge-driver px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 shadow-sm">
+            <Navigation className="w-3.5 h-3.5 text-teal-800 dark:text-teal-200" /> Driver
+          </span>
+        );
       case 'STUDENT':
-        return <span className="role-badge-student px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 shadow-sm"><Compass className="w-3.5 h-3.5" /> Student</span>;
+        return (
+          <span className="role-badge-student px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 shadow-sm">
+            <Compass className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" /> Student
+          </span>
+        );
       default:
         return null;
     }
@@ -31,40 +43,41 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2">
-        <div className="max-w-7xl mx-auto water-glass rounded-2xl px-4 sm:px-6 h-16 flex items-center justify-between shadow-2xl">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 group-hover:scale-105 transition-transform shrink-0">
-              <Bus className="w-5 h-5 text-white" />
+      <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2 transition-all">
+        <div className="max-w-7xl mx-auto water-glass rounded-full sm:rounded-3xl px-4 sm:px-6 h-16 flex items-center justify-between shadow-glass">
+          {/* Logo & College Title */}
+          <Link to="/" className="flex items-center gap-3 group shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center shadow-pill-teal group-hover:scale-105 transition-transform shrink-0">
+              <Bus className="w-5 h-5 text-pastel-yellow" />
             </div>
             <div>
-              <span className="text-lg font-black brand-title tracking-tight block">
+              <span className="text-base sm:text-lg font-black tracking-tight block text-pastel-darkText dark:text-white">
                 CollegeBus Live
               </span>
-              {user?.college?.name && (
-                <span className="block text-[11px] font-bold truncate max-w-[180px] sm:max-w-xs subtext-muted">
-                  {user.college.name}
+              {user?.college?.code && (
+                <span className="block text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-brand-600 dark:text-pastel-softTeal">
+                  {user.college.code} • Campus Transit
                 </span>
               )}
             </div>
           </Link>
 
-
+          {/* Right Header Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 sm:px-3 sm:py-1.5 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-bold theme-toggle-btn shadow-md"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/10 hover:bg-white transition-all flex items-center gap-1.5 text-xs font-extrabold shadow-sm"
               title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
             >
               {theme === 'light' ? (
                 <>
-                  <Moon className="w-4 h-4 text-indigo-600" />
-                  <span className="hidden md:inline text-slate-800 font-extrabold">Dark</span>
+                  <Moon className="w-4 h-4 text-brand-600" />
+                  <span className="hidden md:inline text-pastel-darkText font-extrabold">Dark</span>
                 </>
               ) : (
                 <>
-                  <Sun className="w-4 h-4 text-amber-300" />
+                  <Sun className="w-4 h-4 text-pastel-yellow" />
                   <span className="hidden md:inline text-amber-200 font-extrabold">Light</span>
                 </>
               )}
@@ -72,50 +85,43 @@ export const Navbar: React.FC = () => {
 
             {user ? (
               <>
-                {getRoleBadge(user.role)}
+                <div className="hidden sm:block">
+                  {getRoleBadge(user.role)}
+                </div>
                 
                 {user.role === 'STUDENT' ? (
                   <button
                     onClick={() => setShowProfileModal(true)}
-                    className="flex items-center gap-2 nav-user-btn border px-3 py-1.5 rounded-xl text-sm transition-all shadow-md group font-bold"
-                    title="Click to view/edit profile & boarding point"
+                    className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full border border-brand-500/30 bg-pastel-mint/50 dark:bg-brand-800/50 hover:bg-pastel-mint text-xs sm:text-sm font-extrabold text-brand-900 dark:text-white transition-all shadow-sm"
+                    title="View & Edit Boarding Point"
                   >
-                    <User className="w-4 h-4 text-cyan-500 dark:text-cyan-400 group-hover:scale-110 transition-transform" />
-                    <span>{user.name}</span>
-                    {user.student?.rollNumber && (
-                      <span className="text-xs text-cyan-600 dark:text-cyan-300 font-mono">({user.student.rollNumber})</span>
-                    )}
+                    <div className="w-5 h-5 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center text-[10px]">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="max-w-[80px] sm:max-w-none truncate">{user.name}</span>
                   </button>
                 ) : (
-                  <div className="hidden sm:flex items-center gap-2 nav-user-btn border px-3 py-1.5 rounded-xl text-sm font-bold">
-                    <User className="w-4 h-4 text-slate-400" />
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/10 text-xs sm:text-sm font-bold">
+                    <User className="w-4 h-4 text-brand-600" />
                     <span>{user.name}</span>
                   </div>
                 )}
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1.5 nav-logout-btn border px-3 py-1.5 rounded-xl text-sm font-bold transition-all shadow-md"
+                  className="p-2 sm:px-3 sm:py-1.5 rounded-full border border-red-500/20 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-300 flex items-center gap-1 text-xs sm:text-sm font-extrabold transition-all shadow-sm"
                   title="Logout"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Logout</span>
                 </button>
               </>
-            ) : (
-              <Link
-                to="/"
-                className="text-sm bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white px-4 py-2 rounded-xl font-bold shadow-lg shadow-cyan-500/20 transition-all"
-              >
-                Sign In
-              </Link>
-            )}
+            ) : null}
           </div>
         </div>
       </header>
 
-
-      {/* Student Profile & Boarding Point Modal */}
+      {/* Profile Modal */}
       {user?.role === 'STUDENT' && (
         <StudentProfileModal
           isOpen={showProfileModal}

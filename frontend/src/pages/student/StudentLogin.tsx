@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
 import { Navbar } from '../../components/common/Navbar';
-import { Compass, KeyRound, User, School, ArrowRight, AlertCircle } from 'lucide-react';
+import { Compass, KeyRound, User, School, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const DEFAULT_AP_COLLEGES = [
   { id: 'cmtlrqxgq0000v620e5otz0gg', name: 'Seshadri Rao Gudlavalleru Engineering College (SRGEC)', code: 'SRGEC' },
@@ -38,7 +38,7 @@ export const StudentLogin: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.warn('Backend colleges fetch failed, using default list:', err);
+        console.warn('Backend colleges fetch fallback:', err);
         setCollegeId(DEFAULT_AP_COLLEGES[0].id);
       });
   }, []);
@@ -72,11 +72,11 @@ export const StudentLogin: React.FC = () => {
     setForgotMsg('');
 
     if (newPin.length < 4) {
-      setForgotError('PIN / Password must be at least 4 characters.');
+      setForgotError('PIN must be at least 4 characters.');
       return;
     }
     if (newPin !== confirmPin) {
-      setForgotError('New PINs / Passwords do not match.');
+      setForgotError('New PINs do not match.');
       return;
     }
 
@@ -90,7 +90,6 @@ export const StudentLogin: React.FC = () => {
 
       if (res.data.success) {
         setForgotMsg(res.data.message || 'PIN updated successfully!');
-        // Pre-fill main login form
         setRollNumber(forgotRoll.trim().toUpperCase());
         setPassword(newPin);
         setTimeout(() => {
@@ -105,62 +104,62 @@ export const StudentLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
+    <div className="min-h-screen flex flex-col justify-between text-pastel-darkText dark:text-white">
       <Navbar />
-      <div className="flex-1 flex flex-col justify-center py-8 sm:px-6 lg:px-8 px-4">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-3">
+      <div className="flex-1 flex flex-col justify-center py-6 sm:py-10 px-3 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2.5 group">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 border border-white/20 flex items-center justify-center text-white group-hover:scale-105 transition-transform shadow-xl shadow-cyan-500/25">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 border border-pastel-yellow/60 flex items-center justify-center text-pastel-yellow group-hover:scale-105 transition-transform shadow-pill-teal">
               <Compass className="w-7 h-7" />
             </div>
           </Link>
-          <h2 className="text-3xl font-black tracking-tight drop-shadow-sm text-slate-900 dark:text-white card-title">Student Login</h2>
-          <p className="text-xs font-semibold subtext-muted text-slate-600 dark:text-slate-300">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Student Sign In</h2>
+          <p className="text-xs font-semibold subtext-muted">
             SRGEC Campus Transit System
           </p>
         </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="water-glass py-8 px-6 sm:px-10 rounded-3xl shadow-2xl">
+        <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="water-glass py-7 px-5 sm:px-8 rounded-3xl sm:rounded-4xl shadow-glass border border-white/80">
             {error && (
-              <div className="mb-6 p-4 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-700 dark:text-red-200 text-sm flex items-start gap-3 shadow-lg font-bold">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+              <div className="mb-5 p-3.5 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-900 dark:text-red-200 text-xs flex items-start gap-2.5 font-bold">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
                 <span>{error}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* College Card Display */}
+              {/* College Card */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 form-label">
-                  College
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                  Institution
                 </label>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/10 border border-blue-400/20 text-slate-800 dark:text-cyan-200">
-                  <div className="w-8 h-8 rounded-lg bg-blue-600/20 flex items-center justify-center shrink-0">
-                    <School className="w-4 h-4 text-blue-500 dark:text-cyan-400" />
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-pastel-cream/70 dark:bg-brand-900/40 border border-amber-300 dark:border-white/10">
+                  <div className="w-8 h-8 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center shrink-0">
+                    <School className="w-4 h-4" />
                   </div>
                   <div className="text-xs font-bold leading-tight">
-                    <div className="text-slate-900 dark:text-white font-black">Seshadri Rao Gudlavalleru Engineering College</div>
-                    <div className="text-[10px] text-blue-600 dark:text-cyan-400 font-bold">SRGEC, Gudlavalleru</div>
+                    <div className="font-extrabold text-pastel-darkText dark:text-white">SRGEC Gudlavalleru</div>
+                    <div className="text-[10px] text-brand-700 dark:text-pastel-softTeal font-bold">Campus Fleet</div>
                   </div>
                 </div>
               </div>
 
               {/* Roll Number */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 form-label">
-                  Roll Number (e.g. 21B91A0501)
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                  Student Roll Number
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <User className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                    <User className="w-4 h-4" />
                   </div>
                   <input
                     type="text"
                     value={rollNumber}
                     onChange={(e) => setRollNumber(e.target.value)}
-                    placeholder="e.g. 21B91A0501"
-                    className="w-full water-glass-input rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none font-bold tracking-wider uppercase"
+                    placeholder="e.g. 24481A05M9"
+                    className="w-full water-glass-input rounded-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-bold tracking-wider uppercase"
                     required
                   />
                 </div>
@@ -168,8 +167,8 @@ export const StudentLogin: React.FC = () => {
 
               {/* Password */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-black uppercase tracking-wider form-label">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-black uppercase tracking-wider subtext-muted">
                     Password / PIN
                   </label>
                   <button
@@ -180,21 +179,21 @@ export const StudentLogin: React.FC = () => {
                       setForgotMsg('');
                       setForgotError('');
                     }}
-                    className="text-xs text-cyan-500 hover:text-cyan-400 font-bold transition-colors underline"
+                    className="text-xs text-brand-700 dark:text-pastel-yellow hover:underline font-bold"
                   >
                     Forgot PIN?
                   </button>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <KeyRound className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                    <KeyRound className="w-4 h-4" />
                   </div>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full water-glass-input rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none font-bold"
+                    className="w-full water-glass-input rounded-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-bold"
                     required
                   />
                 </div>
@@ -203,16 +202,16 @@ export const StudentLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-cyan-500/25 transition-all disabled:opacity-50 mt-4 text-sm"
+                className="btn-pill-yellow w-full text-xs sm:text-sm py-3.5 gap-2 mt-2"
               >
                 {loading ? 'Authenticating...' : 'Sign In to Dashboard'}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
 
-            <div className="mt-6 text-center text-xs font-bold subtext-muted">
+            <div className="mt-5 text-center text-xs font-bold subtext-muted">
               Don't have an account?{' '}
-              <Link to="/student/register" className="link-primary underline ml-1">
+              <Link to="/student/register" className="text-brand-700 dark:text-pastel-yellow underline ml-1">
                 Register here
               </Link>
             </div>
@@ -220,99 +219,77 @@ export const StudentLogin: React.FC = () => {
         </div>
       </div>
 
-      {/* Forgot PIN / Password Recovery Modal */}
+      {/* Forgot PIN Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="water-glass max-w-md w-full p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/20 space-y-5 relative">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
-                  🔑
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white">Reset Student PIN</h3>
-                  <span className="text-[11px] text-slate-400">Instant Roll Number PIN Recovery</span>
-                </div>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="water-glass rounded-3xl sm:rounded-4xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-white/80">
+            <h3 className="text-lg font-black text-pastel-darkText dark:text-white">Recover Student PIN</h3>
+
+            {forgotMsg && (
+              <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-900 dark:text-emerald-100 text-xs font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{forgotMsg}</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowForgotModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
+            )}
 
             {forgotError && (
-              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs font-bold flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div className="p-3 rounded-2xl bg-red-500/20 text-red-900 dark:text-red-100 text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600" />
                 <span>{forgotError}</span>
               </div>
             )}
 
-            {forgotMsg && (
-              <div className="p-3.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs font-bold flex items-start gap-2">
-                <span>✅ {forgotMsg}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleForgotSubmit} className="space-y-4">
+            <form onSubmit={handleForgotSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 form-label">
-                  Your Roll Number
-                </label>
+                <label className="block text-[10px] font-black uppercase subtext-muted mb-1">Roll Number</label>
                 <input
                   type="text"
                   value={forgotRoll}
                   onChange={(e) => setForgotRoll(e.target.value)}
-                  placeholder="e.g. 24481A05M9"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm font-bold uppercase"
+                  placeholder="24481A05M9"
+                  className="w-full water-glass-input rounded-full px-3.5 py-2 text-xs font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 form-label">
-                  New Password / PIN (min 4 characters)
-                </label>
+                <label className="block text-[10px] font-black uppercase subtext-muted mb-1">New PIN / Password</label>
                 <input
                   type="password"
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value)}
-                  placeholder="Enter new PIN or password"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm font-bold"
+                  placeholder="••••"
+                  className="w-full water-glass-input rounded-full px-3.5 py-2 text-xs font-bold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 form-label">
-                  Confirm New Password / PIN
-                </label>
+                <label className="block text-[10px] font-black uppercase subtext-muted mb-1">Confirm New PIN</label>
                 <input
                   type="password"
                   value={confirmPin}
                   onChange={(e) => setConfirmPin(e.target.value)}
-                  placeholder="Re-enter new PIN or password"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm font-bold"
+                  placeholder="••••"
+                  className="w-full water-glass-input rounded-full px-3.5 py-2 text-xs font-bold"
                   required
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                  className="btn-pill-secondary flex-1 text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black text-xs shadow-lg shadow-cyan-500/25 transition-all disabled:opacity-50"
+                  className="btn-pill-primary flex-1 text-xs"
                 >
-                  {forgotLoading ? 'Updating...' : 'Set New PIN'}
+                  {forgotLoading ? 'Updating...' : 'Save New PIN'}
                 </button>
               </div>
             </form>

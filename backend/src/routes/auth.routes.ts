@@ -188,7 +188,7 @@ router.post('/student/register', async (req: Request, res: Response) => {
       password,
     } = req.body;
 
-    if (!name || (!collegeId && !newCollegeName) || !rollNumber || !password) {
+    if (!name || !rollNumber || !password) {
       return res.status(400).json({ error: 'Please provide all required fields.' });
     }
 
@@ -485,8 +485,8 @@ router.post('/driver/register', async (req: Request, res: Response) => {
   try {
     const { driverName, collegeId, newCollegeName, latitude, longitude, busNumber, phone, password } = req.body;
 
-    if (!driverName || (!collegeId && !newCollegeName) || !password) {
-      return res.status(400).json({ error: 'Driver name, college, and password are required.' });
+    if (!driverName || !password) {
+      return res.status(400).json({ error: 'Driver name and password are required.' });
     }
 
     let finalCollegeId = collegeId;

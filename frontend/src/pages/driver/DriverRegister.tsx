@@ -70,26 +70,26 @@ export const DriverRegister: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
+    <div className="min-h-screen flex flex-col justify-between text-pastel-darkText dark:text-white">
       <Navbar />
-      <div className="flex-1 flex flex-col justify-center py-8 sm:px-6 lg:px-8 px-4">
+      <div className="flex-1 flex flex-col justify-center py-6 sm:py-10 px-3 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2.5 group">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 border border-white/20 flex items-center justify-center text-white group-hover:scale-105 transition-transform shadow-xl shadow-emerald-500/25">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 border border-pastel-yellow/60 flex items-center justify-center text-pastel-yellow group-hover:scale-105 transition-transform shadow-pill-teal">
               <Navigation className="w-7 h-7" />
             </div>
           </Link>
-          <h2 className="text-3xl font-black tracking-tight drop-shadow-sm text-slate-900 dark:text-white card-title">Driver Registration</h2>
-          <p className="text-xs font-semibold subtext-muted text-slate-600 dark:text-slate-300">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Driver Registration</h2>
+          <p className="text-xs font-semibold subtext-muted">
             SRGEC Live GPS Broadcasting
           </p>
         </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="water-glass py-8 px-6 sm:px-10 rounded-3xl shadow-2xl">
+        <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="water-glass py-7 px-5 sm:px-8 rounded-3xl sm:rounded-4xl shadow-glass border border-white/80">
             {error && (
-              <div className="mb-6 p-4 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-700 dark:text-red-200 text-sm flex items-start gap-3 shadow-lg font-bold">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+              <div className="mb-5 p-3.5 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-900 dark:text-red-200 text-xs flex items-start gap-2.5 font-bold">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
                 <span>{error}</span>
               </div>
             )}
@@ -97,23 +97,23 @@ export const DriverRegister: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* College Card Display */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 form-label">
-                  College
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                  Institution
                 </label>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-400/20 text-slate-800 dark:text-emerald-200">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-600/20 flex items-center justify-center shrink-0">
-                    <School className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-pastel-cream/70 dark:bg-brand-900/40 border border-amber-300 dark:border-white/10">
+                  <div className="w-8 h-8 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center shrink-0">
+                    <School className="w-4 h-4" />
                   </div>
                   <div className="text-xs font-bold leading-tight">
                     <div className="text-slate-900 dark:text-white font-black">Seshadri Rao Gudlavalleru Engineering College</div>
-                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">SRGEC, Gudlavalleru</div>
+                    <div className="text-[10px] text-brand-700 dark:text-pastel-yellow font-bold">SRGEC, Gudlavalleru</div>
                   </div>
                 </div>
               </div>
 
               {/* Driver Name */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 form-label">
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
                   Driver Name
                 </label>
                 <input
@@ -121,26 +121,26 @@ export const DriverRegister: React.FC = () => {
                   value={driverName}
                   onChange={(e) => setDriverName(e.target.value)}
                   placeholder="e.g. Ramesh"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none"
+                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
                   required
                 />
               </div>
 
               {/* Bus Number */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 form-label">
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
                   Bus Number
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Bus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                    <Bus className="w-4 h-4" />
                   </div>
                   <input
                     type="text"
                     value={busNumber}
                     onChange={(e) => setBusNumber(e.target.value)}
                     placeholder="e.g. AP 16 TJ 1234 or BUS-05"
-                    className="w-full water-glass-input rounded-xl pl-10 pr-4 py-2.5 text-sm uppercase font-bold focus:outline-none"
+                    className="w-full water-glass-input rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm uppercase font-bold"
                     required
                   />
                 </div>
@@ -148,7 +148,7 @@ export const DriverRegister: React.FC = () => {
 
               {/* Phone */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 form-label">
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
                   Mobile Number (For Login Identifier)
                 </label>
                 <input
@@ -156,38 +156,43 @@ export const DriverRegister: React.FC = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="e.g. 9876543210"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none font-bold"
+                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
                 />
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 form-label">
-                  Password
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                  Password / PIN
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm focus:outline-none font-bold"
-                  required
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full water-glass-input rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm font-bold"
+                    required
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/25 transition-all disabled:opacity-50 mt-4 text-sm"
+                className="btn-pill-yellow w-full text-xs sm:text-sm py-3.5 gap-2 mt-4"
               >
                 {loading ? 'Creating Driver Profile...' : 'Complete Registration'}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
 
-            <div className="mt-6 text-center text-xs font-bold subtext-muted">
+            <div className="mt-5 text-center text-xs font-bold subtext-muted">
               Already registered?{' '}
-              <Link to="/driver/login" className="link-emerald underline ml-1">
+              <Link to="/driver/login" className="text-brand-700 dark:text-pastel-yellow underline ml-1">
                 Login here
               </Link>
             </div>

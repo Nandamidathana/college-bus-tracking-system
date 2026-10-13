@@ -85,26 +85,26 @@ export const AdminLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between">
+    <div className="min-h-screen flex flex-col justify-between text-pastel-darkText dark:text-white">
       <Navbar />
-      <div className="flex-1 flex flex-col justify-center py-8 sm:px-6 lg:px-8 px-4">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-3">
+      <div className="flex-1 flex flex-col justify-center py-6 sm:py-10 px-3 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2.5 group">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 border border-white/20 flex items-center justify-center text-white group-hover:scale-105 transition-transform shadow-xl shadow-purple-500/25">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 border border-pastel-yellow/60 flex items-center justify-center text-pastel-yellow group-hover:scale-105 transition-transform shadow-pill-teal">
               <Shield className="w-7 h-7" />
             </div>
           </Link>
-          <h2 className="text-3xl font-black tracking-tight drop-shadow-sm text-slate-900 dark:text-white card-title">Admin Console</h2>
-          <p className="text-xs font-semibold subtext-muted text-slate-600 dark:text-slate-300">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Admin Console</h2>
+          <p className="text-xs font-semibold subtext-muted">
             SRGEC Transport Management
           </p>
         </div>
 
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="water-glass py-8 px-6 sm:px-10 rounded-3xl shadow-2xl">
+        <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="water-glass py-7 px-5 sm:px-8 rounded-3xl sm:rounded-4xl shadow-glass border border-white/80">
             {error && (
-              <div className="mb-6 p-4 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-700 dark:text-red-200 text-sm flex items-start gap-3 shadow-lg font-bold">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+              <div className="mb-5 p-3.5 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-900 dark:text-red-200 text-xs flex items-start gap-2.5 font-bold">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
                 <span>{error}</span>
               </div>
             )}
@@ -112,19 +112,19 @@ export const AdminLogin: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email / Username */}
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1.5 form-label">
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
                   Admin Email or Username
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Mail className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                    <Mail className="w-4 h-4" />
                   </div>
                   <input
                     type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@srgec.edu or admin"
-                    className="w-full water-glass-input rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none font-bold"
+                    className="w-full water-glass-input rounded-2xl pl-11 pr-4 py-2.5 text-xs sm:text-sm font-bold"
                     required
                   />
                 </div>
@@ -132,8 +132,8 @@ export const AdminLogin: React.FC = () => {
 
               {/* Password */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-black uppercase tracking-wider form-label">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-black uppercase tracking-wider subtext-muted">
                     Password
                   </label>
                   <button
@@ -144,21 +144,21 @@ export const AdminLogin: React.FC = () => {
                       setForgotMsg('');
                       setForgotError('');
                     }}
-                    className="text-xs text-purple-400 hover:text-purple-300 font-bold transition-colors underline"
+                    className="text-xs text-brand-700 dark:text-pastel-yellow hover:underline font-bold"
                   >
                     Forgot Password?
                   </button>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <KeyRound className="w-5 h-5" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                    <KeyRound className="w-4 h-4" />
                   </div>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full water-glass-input rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none font-bold"
+                    className="w-full water-glass-input rounded-2xl pl-11 pr-4 py-2.5 text-xs sm:text-sm font-bold"
                     required
                   />
                 </div>
@@ -167,16 +167,16 @@ export const AdminLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-500 hover:to-indigo-400 text-white font-black py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-purple-500/25 transition-all disabled:opacity-50 mt-4 text-sm"
+                className="btn-pill-yellow w-full text-xs sm:text-sm py-3.5 gap-2 mt-4"
               >
                 {loading ? 'Authenticating...' : 'Sign In as Administrator'}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
 
-            <div className="mt-6 text-center text-xs font-bold subtext-muted">
+            <div className="mt-5 text-center text-xs font-bold subtext-muted">
               Need to manage student or driver accounts?{' '}
-              <Link to="/" className="link-purple underline ml-1">
+              <Link to="/" className="text-brand-700 dark:text-pastel-yellow underline ml-1">
                 Home Portal
               </Link>
             </div>
@@ -186,43 +186,43 @@ export const AdminLogin: React.FC = () => {
 
       {/* Forgot Password Recovery Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="water-glass max-w-md w-full p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/20 space-y-5 relative">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="water-glass max-w-md w-full p-6 sm:p-8 rounded-3xl sm:rounded-4xl shadow-glass border border-white/80 space-y-4 relative">
+            <div className="flex items-center justify-between pb-3 border-pastel-yellow/30 border-b">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center font-bold">
                   🔐
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white">Reset Admin Password</h3>
-                  <span className="text-[11px] text-slate-400">College Admin Account Recovery</span>
+                  <h3 className="text-base font-black">Reset Admin Password</h3>
+                  <span className="text-[11px] subtext-muted">College Admin Account Recovery</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowForgotModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                className="p-1.5 rounded-full hover:bg-black/10 transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {forgotError && (
-              <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs font-bold flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-900 dark:text-rose-200 text-xs font-bold flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <span>{forgotError}</span>
               </div>
             )}
 
             {forgotMsg && (
-              <div className="p-3.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs font-bold flex items-start gap-2">
+              <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-start gap-2">
                 <span>✅ {forgotMsg}</span>
               </div>
             )}
 
-            <form onSubmit={handleForgotSubmit} className="space-y-4">
+            <form onSubmit={handleForgotSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 form-label">
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
                   Admin Email / Username
                 </label>
                 <input
@@ -230,13 +230,13 @@ export const AdminLogin: React.FC = () => {
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   placeholder="e.g. admin@srgec.edu or admin"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm font-bold"
+                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 form-label">
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
                   College Code (Optional / Verification)
                 </label>
                 <input
@@ -244,12 +244,12 @@ export const AdminLogin: React.FC = () => {
                   value={collegeCode}
                   onChange={(e) => setCollegeCode(e.target.value)}
                   placeholder="e.g. SRGEC"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm font-bold uppercase"
+                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold uppercase"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 form-label">
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
                   New Password (min 6 characters)
                 </label>
                 <input
@@ -257,13 +257,13 @@ export const AdminLogin: React.FC = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new admin password"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm font-bold"
+                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 form-label">
+                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
                   Confirm New Password
                 </label>
                 <input
@@ -271,7 +271,7 @@ export const AdminLogin: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter new admin password"
-                  className="w-full water-glass-input rounded-xl px-4 py-2.5 text-sm font-bold"
+                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
                   required
                 />
               </div>
@@ -280,14 +280,14 @@ export const AdminLogin: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                  className="px-4 py-2 rounded-full text-xs font-bold subtext-muted hover:bg-black/5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-black text-xs shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50"
+                  className="btn-pill-yellow text-xs py-2.5 px-5"
                 >
                   {forgotLoading ? 'Updating...' : 'Set New Password'}
                 </button>

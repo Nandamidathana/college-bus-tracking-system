@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuth } from '../../context/AuthContext';
@@ -16,12 +16,9 @@ import {
   Crosshair,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   Search,
-  Navigation,
   Loader2,
   Map as MapIcon,
-  Check,
 } from 'lucide-react';
 
 interface StudentProfileModalProps {
@@ -30,7 +27,6 @@ interface StudentProfileModalProps {
   onProfileUpdated?: () => void;
 }
 
-// Preset Stops with Exact Coordinates (including Himaja Boys Hostel at red mark 16.3496, 81.0498)
 const POPULAR_AP_STOPS = [
   { name: 'Himaja Boys Hostel, Gudlavalleru', lat: 16.3496, lng: 81.0498 },
   { name: 'Gudlavalleru College Road / Hostels', lat: 16.3488, lng: 81.0478 },
@@ -43,7 +39,6 @@ const POPULAR_AP_STOPS = [
   { name: 'Machilipatnam Bus Stand', lat: 16.1875, lng: 81.1389 },
 ];
 
-// Interactive Click-to-Pin component for Leaflet
 const MapLocationPicker: React.FC<{
   position: [number, number];
   onPositionSelected: (lat: number, lng: number) => void;
@@ -71,18 +66,17 @@ const MapLocationPicker: React.FC<{
     >
       <Popup>
         <div className="text-xs p-1 font-bold text-center">
-          📍 Selected Boarding Point<br />
-          <span className="text-[10px] text-slate-400 font-mono">
+          📍 Selected Boarding Stop<br />
+          <span className="text-[10px] text-slate-500 font-mono">
             {position[0].toFixed(5)}, {position[1].toFixed(5)}
           </span>
-          <p className="text-[9px] text-cyan-400 mt-1 font-normal">(Drag or click map to move)</p>
+          <p className="text-[9px] text-brand-600 mt-1 font-normal">(Drag or click to move)</p>
         </div>
       </Popup>
     </Marker>
   );
 };
 
-// Auto-Pan to new position
 const MapPanTo: React.FC<{ position: [number, number] }> = ({ position }) => {
   const map = useMap();
   useEffect(() => {
@@ -107,36 +101,30 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   const [longitude, setLongitude] = useState<number | string>(81.0498);
 
   const [suggestions, setSuggestions] = useState<GeocodeResult[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceTimerRef = useRef<any>(null);
+
   const [detectingGps, setDetectingGps] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const debounceTimerRef = useRef<any>(null);
-
   useEffect(() => {
-    if (user && student) {
-      setName(user.name || '');
+    if (student) {
+      setName(user?.name || '');
       setVillage(student.village || '');
-      if (student.boardingPoint) {
-        setBoardingPointName(student.boardingPoint.name);
-        setLatitude(student.boardingPoint.latitude);
-        setLongitude(student.boardingPoint.longitude);
-      }
+      setBoardingPointName(student.boardingPoint?.name || '');
+      setLatitude(student.boardingPoint?.latitude || 16.3496);
+      setLongitude(student.boardingPoint?.longitude || 81.0498);
     }
-  }, [user, student, isOpen]);
+  }, [student, user, isOpen]);
 
-  // Handle typing geocode search
   const handleLocationInputChange = (text: string) => {
     setBoardingPointName(text);
-    setErrorMsg('');
-
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
-    if (text.trim().toLowerCase().includes('himaja')) {
-      // Direct preset for Himaja Boys Hostel at exact coordinates
+    if (text.toLowerCase().includes('himaja')) {
       setLatitude(16.3496);
       setLongitude(81.0498);
       return;
@@ -188,101 +176,65 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     setShowSuggestions(false);
   };
 
-  // Map click/drag position handler
   const handleMapPositionChange = async (lat: number, lng: number) => {
     setLatitude(lat);
     setLongitude(lng);
 
-    // If name is default or we want address preview
     try {
       const address = await reverseGeocode(lat, lng);
       if (address && (!boardingPointName || boardingPointName.includes('My Live Location') || boardingPointName.includes('GPS'))) {
         const shortName = address.split(',')[0];
         setBoardingPointName(shortName);
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
   };
 
-  // Auto-Detect Live Device GPS with Multi-Sample Satellite Lock
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
-      setErrorMsg('Geolocation is not supported by your device/browser.');
+      setErrorMsg('Geolocation is not supported by your device.');
       return;
     }
 
     setDetectingGps(true);
     setErrorMsg('');
 
-    let bestFix: { latitude: number; longitude: number; accuracy: number } | null = null;
-    let samples = 0;
-    let isFinished = false;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        setLatitude(lat);
+        setLongitude(lng);
 
-    const finishWithFix = async (fix: { latitude: number; longitude: number; accuracy: number } | null) => {
-      if (isFinished) return;
-      isFinished = true;
-      if (fix) {
-        setLatitude(Number(fix.latitude.toFixed(6)));
-        setLongitude(Number(fix.longitude.toFixed(6)));
-
-        const address = await reverseGeocode(fix.latitude, fix.longitude);
+        const address = await reverseGeocode(lat, lng);
         if (address) {
-          const shortName = address.split(',')[0];
-          setBoardingPointName(shortName);
-        } else if (!boardingPointName) {
-          setBoardingPointName('Himaja Boys Hostel, Gudlavalleru');
+          setBoardingPointName(address.split(',')[0]);
         }
-
         setDetectingGps(false);
-        setSuccessMsg(`High-precision GPS locked (±${Math.round(fix.accuracy)}m)!`);
+        setSuccessMsg(`GPS position locked (±${Math.round(pos.coords.accuracy || 5)}m)!`);
         setTimeout(() => setSuccessMsg(''), 4000);
-      } else {
-        setErrorMsg('Could not acquire device GPS. Please verify high-accuracy location permissions.');
-        setDetectingGps(false);
-      }
-    };
-
-    const warmUpWatchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        samples++;
-        const acc = pos.coords.accuracy || 50;
-        if (!bestFix || acc < bestFix.accuracy) {
-          bestFix = {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: acc,
-          };
-        }
-
-        if (acc <= 10 || samples >= 4) {
-          navigator.geolocation.clearWatch(warmUpWatchId);
-          finishWithFix(bestFix);
-        }
       },
       (err) => {
-        console.warn('GPS detection warning:', err);
+        console.warn('GPS detection error:', err);
+        setErrorMsg('Could not acquire device GPS. Please verify location permissions.');
+        setDetectingGps(false);
       },
-      { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-
-    setTimeout(() => {
-      navigator.geolocation.clearWatch(warmUpWatchId);
-      finishWithFix(bestFix);
-    }, 2800);
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setErrorMsg('');
     setSuccessMsg('');
+    setErrorMsg('');
+    setSaving(true);
 
     const bpName = boardingPointName.trim() || 'Gudivada Bus Stand';
     let finalLat = parseFloat(String(latitude));
     let finalLng = parseFloat(String(longitude));
 
-    if (isNaN(finalLat) || isNaN(finalLng) || (finalLat === 16.35 && finalLng === 80.62)) {
+    if (isNaN(finalLat) || isNaN(finalLng)) {
       const match = await getExactCoordinates(bpName);
       if (match) {
         finalLat = match.latitude;
@@ -305,7 +257,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
       const res = await studentApi.updateProfile(payload);
       if (res.data.success) {
         await refreshUser();
-        setSuccessMsg('📍 Exact boarding location coordinates saved successfully!');
+        setSuccessMsg('📍 Exact boarding location saved successfully!');
         setIsEditing(false);
         if (onProfileUpdated) onProfileUpdated();
         setTimeout(() => {
@@ -329,43 +281,43 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="water-glass rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 relative">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="water-glass rounded-3xl sm:rounded-4xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 my-6 relative border border-white/80">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-colors border border-white/15"
+          className="absolute top-5 right-5 p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-slate-500 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
         <div className="flex items-center gap-3.5 pr-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500/25 to-blue-600/35 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shadow-lg shadow-cyan-500/20">
-            <Compass className="w-7 h-7" />
+          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow shadow-pill-teal shrink-0">
+            <Compass className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-white tracking-tight drop-shadow-sm">
+            <h2 className="text-lg sm:text-xl font-black text-pastel-darkText dark:text-white tracking-tight">
               Student Profile & Boarding Stop
             </h2>
-            <p className="text-xs text-slate-200">
-              Set your exact boarding location or hostel on the map with pinpoint accuracy.
+            <p className="text-xs subtext-muted font-semibold">
+              Configure your exact pickup location for 2km push alerts and accurate bus ETAs.
             </p>
           </div>
         </div>
 
-        {/* Success / Error Messages */}
+        {/* Messages */}
         {successMsg && (
-          <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold flex items-center gap-2 shadow-lg">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-900 dark:text-emerald-100 text-xs font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-300 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {errorMsg && (
-          <div className="p-3.5 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-200 text-xs font-bold flex items-center gap-2 shadow-lg">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3.5 rounded-2xl bg-red-500/20 border border-red-500/50 text-red-900 dark:text-red-100 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-300 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
@@ -373,56 +325,44 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
         {!isEditing ? (
           /* View Mode */
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/10">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10">
+                <span className="text-[10px] font-bold uppercase tracking-wider subtext-muted block">
                   Student Name
                 </span>
-                <span className="text-base font-extrabold text-white mt-0.5 block">
+                <span className="text-sm sm:text-base font-black text-pastel-darkText dark:text-white mt-0.5 block truncate">
                   {user?.name}
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/10">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block">
+              <div className="p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10">
+                <span className="text-[10px] font-bold uppercase tracking-wider subtext-muted block">
                   Roll Number
                 </span>
-                <span className="text-base font-mono font-bold text-cyan-300 mt-0.5 block">
+                <span className="text-sm sm:text-base font-mono font-bold text-brand-700 dark:text-pastel-softTeal mt-0.5 block">
                   {student.rollNumber}
                 </span>
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/10 space-y-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block">
-                College Institution
-              </span>
-              <span className="text-sm font-bold text-white block">
-                {user?.college?.name || student.college?.name}
-              </span>
-              <span className="text-xs text-slate-300 block">
-                {user?.college?.address || student.college?.address}
-              </span>
-            </div>
-
             {/* Boarding Point Highlight Box */}
-            <div className="p-5 rounded-2xl bg-cyan-500/10 border border-cyan-400/30 space-y-2">
+            <div className="p-5 rounded-3xl bg-pastel-cream/70 dark:bg-brand-900/40 border border-amber-300 dark:border-white/10 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-pastel-yellow flex items-center gap-1.5">
                   <MapPin className="w-4 h-4" />
-                  Your Configured Boarding Stop
+                  Your Boarding Stop
                 </span>
-                <span className="text-[10px] font-bold bg-cyan-500/20 text-cyan-200 border border-cyan-400/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-black bg-pastel-yellow text-pastel-darkText px-2 py-0.5 rounded-full">
                   2 KM Alert Anchor
                 </span>
               </div>
 
-              <h4 className="text-lg font-black text-white">
+              <h4 className="text-lg font-black text-pastel-darkText dark:text-white">
                 {student.boardingPoint?.name || 'Not Configured'}
               </h4>
 
               {student.boardingPoint && (
-                <div className="text-xs text-slate-200 font-mono font-medium">
+                <div className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
                   GPS: {student.boardingPoint.latitude.toFixed(5)}, {student.boardingPoint.longitude.toFixed(5)}
                 </div>
               )}
@@ -431,86 +371,85 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-cyan-500/25 transition-all text-sm"
+              className="btn-pill-primary w-full gap-2 text-sm"
             >
               <Edit2 className="w-4 h-4" />
-              Change Location / Click Pin on Map
+              Change Stop Location / Pin on Map
             </button>
           </div>
         ) : (
-          /* Edit Mode Form with Interactive Pin-Drop Map */
+          /* Edit Mode */
           <form onSubmit={handleSaveProfile} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-slate-200 uppercase mb-1">
+                <label className="block text-[11px] font-black uppercase tracking-wider subtext-muted mb-1">
                   Full Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full water-glass-input text-white rounded-xl px-3.5 py-2.5 text-sm font-bold"
+                  className="w-full water-glass-input rounded-xl px-3.5 py-2 text-sm font-bold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-200 uppercase mb-1">
+                <label className="block text-[11px] font-black uppercase tracking-wider subtext-muted mb-1">
                   Village / Area
                 </label>
                 <input
                   type="text"
                   value={village}
                   onChange={(e) => setVillage(e.target.value)}
-                  className="w-full water-glass-input text-white rounded-xl px-3.5 py-2.5 text-sm font-bold"
+                  className="w-full water-glass-input rounded-xl px-3.5 py-2 text-sm font-bold"
                   required
                 />
               </div>
             </div>
 
-            {/* Boarding Point Custom Location & GPS Controls */}
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/10 space-y-3">
+            {/* Boarding Point Search & Map */}
+            <div className="p-4 rounded-3xl bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5" /> Boarding Stop / Hostel Name
+                <label className="block text-xs font-black uppercase tracking-wider text-brand-700 dark:text-pastel-softTeal flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" /> Stop / Hostel Name
                 </label>
                 <button
                   type="button"
                   onClick={handleDetectGPS}
                   disabled={detectingGps}
-                  className="text-xs font-bold bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-200 border border-cyan-400/40 px-3 py-1 rounded-lg flex items-center gap-1.5 transition-colors"
+                  className="text-[11px] font-bold bg-pastel-mint text-brand-900 border border-brand-400 px-2.5 py-1 rounded-full flex items-center gap-1"
                 >
-                  <Crosshair className="w-3.5 h-3.5 animate-pulse" />
-                  {detectingGps ? 'Locking GPS...' : 'Use My Live GPS'}
+                  <Crosshair className="w-3.5 h-3.5" />
+                  {detectingGps ? 'Locating...' : 'Use Device GPS'}
                 </button>
               </div>
 
-              {/* Location Input with Live Typeahead & Automatic Coordinates Update */}
+              {/* Autocomplete Input */}
               <div className="relative">
                 <input
                   type="text"
                   value={boardingPointName}
                   onChange={(e) => handleLocationInputChange(e.target.value)}
                   placeholder="Type any place (e.g. Himaja Boys Hostel, Gudivada)..."
-                  className="w-full water-glass-input text-white rounded-xl px-4 py-2.5 pr-10 text-sm font-bold focus:outline-none"
+                  className="w-full water-glass-input rounded-xl px-3.5 py-2.5 pr-10 text-sm font-bold"
                   required
                 />
                 <div className="absolute right-3 top-3 text-slate-400">
-                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin text-cyan-400" /> : <Search className="w-4 h-4" />}
+                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin text-brand-600" /> : <Search className="w-4 h-4" />}
                 </div>
 
-                {/* Autocomplete Suggestions Dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-slate-900 border border-white/15 rounded-xl shadow-2xl overflow-hidden max-h-48 overflow-y-auto divide-y divide-slate-800">
+                  <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white dark:bg-brand-900 border border-black/10 dark:border-white/15 rounded-xl shadow-2xl overflow-hidden max-h-44 overflow-y-auto divide-y divide-black/5 dark:divide-white/10">
                     {suggestions.map((s, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => handleSelectSuggestion(s)}
-                        className="w-full text-left px-3.5 py-2 hover:bg-cyan-600/20 text-xs text-slate-200 transition-colors flex items-center justify-between"
+                        className="w-full text-left px-3.5 py-2 hover:bg-pastel-mint/50 text-xs text-pastel-darkText dark:text-white transition-colors flex items-center justify-between"
                       >
                         <span className="font-semibold truncate">{s.displayName}</span>
-                        <span className="text-[10px] text-cyan-300 font-mono shrink-0 ml-2">
+                        <span className="text-[10px] font-mono text-brand-600 shrink-0 ml-2">
                           {s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}
                         </span>
                       </button>
@@ -519,92 +458,38 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                 )}
               </div>
 
-              {/* Quick 1-Tap Popular Stops (Includes Himaja Boys Hostel) */}
-              <div className="pt-1">
-                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider block mb-1.5">
-                  Popular Gudlavalleru Stops:
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {POPULAR_AP_STOPS.map((chip, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleQuickChipSelect(chip)}
-                      className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-colors ${
-                        (chip.name.includes('Himaja') && boardingPointName.includes('Himaja')) || boardingPointName === chip.name
-                          ? 'bg-cyan-500 border-cyan-300 text-slate-950 font-black shadow-md shadow-cyan-500/25'
-                          : 'bg-slate-900/80 border-white/10 text-slate-200 hover:bg-slate-800 hover:text-white'
-                      }`}
-                    >
-                      {chip.name.split(',')[0]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 🗺️ INTERACTIVE MAP PIN-DROPPER: Click or Drag anywhere to set exact location */}
-              <div className="pt-2">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1">
-                    <MapIcon className="w-3.5 h-3.5" />
-                    Interactive Map: Click Anywhere to Pinpoint
-                  </span>
-                  <span className="text-[10px] text-slate-300 font-mono">
-                    {currentCoords[0].toFixed(5)}, {currentCoords[1].toFixed(5)}
-                  </span>
-                </div>
-
-                <div className="h-44 w-full rounded-2xl overflow-hidden border border-white/15 shadow-inner">
-                  <MapContainer
-                    center={currentCoords}
-                    zoom={16}
-                    style={{ height: '100%', width: '100%' }}
-                    scrollWheelZoom={false}
+              {/* Quick Preset Stops */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {POPULAR_AP_STOPS.slice(0, 5).map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleQuickChipSelect(chip)}
+                    className="text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 hover:bg-pastel-mint text-pastel-darkText dark:text-white transition-colors"
                   >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <MapLocationPicker
-                      position={currentCoords}
-                      onPositionSelected={handleMapPositionChange}
-                    />
-                    <MapPanTo position={currentCoords} />
-                  </MapContainer>
-                </div>
-                <span className="text-[10px] text-slate-300 block mt-1">
-                  💡 Tip: Click anywhere on the map or drag the blue marker to place your boarding point directly on your hostel.
-                </span>
+                    {chip.name.split(',')[0]}
+                  </button>
+                ))}
               </div>
 
-              {/* Real-Time Updated Coordinates */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="bg-slate-900/90 p-2.5 rounded-xl border border-white/10">
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase mb-0.5">
-                    Latitude
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    className="w-full bg-transparent text-emerald-400 font-mono text-xs font-bold focus:outline-none"
-                    required
+              {/* Map Pin-Dropper */}
+              <div className="h-44 sm:h-52 w-full rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 shadow-inner">
+                <MapContainer
+                  center={currentCoords}
+                  zoom={16}
+                  style={{ height: '100%', width: '100%' }}
+                  scrollWheelZoom={false}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
-                </div>
-                <div className="bg-slate-900/90 p-2.5 rounded-xl border border-white/10">
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase mb-0.5">
-                    Longitude
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    className="w-full bg-transparent text-emerald-400 font-mono text-xs font-bold focus:outline-none"
-                    required
+                  <MapLocationPicker
+                    position={currentCoords}
+                    onPositionSelected={handleMapPositionChange}
                   />
-                </div>
+                  <MapPanTo position={currentCoords} />
+                </MapContainer>
               </div>
             </div>
 
@@ -612,14 +497,14 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-3 px-4 rounded-xl transition-colors border border-white/15 text-xs"
+                className="btn-pill-secondary flex-1 text-xs"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-xl shadow-cyan-500/25 transition-all text-xs disabled:opacity-50"
+                className="btn-pill-primary flex-1 text-xs gap-1.5"
               >
                 {saving ? (
                   <>
@@ -629,7 +514,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Save Boarding Point
+                    Save Coordinates
                   </>
                 )}
               </button>

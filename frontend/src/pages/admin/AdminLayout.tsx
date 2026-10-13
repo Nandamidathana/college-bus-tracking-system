@@ -19,7 +19,6 @@ import {
   FileSpreadsheet,
   AlertTriangle,
   X,
-  MapPin,
   ChevronRight,
   Phone,
 } from 'lucide-react';
@@ -95,19 +94,19 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row relative">
-      {/* Real-time Delayed Bus Floating Alert Toaster */}
+    <div className="min-h-screen flex flex-col md:flex-row relative text-pastel-darkText dark:text-white">
+      {/* Floating Late Bus Alert Toast */}
       {delayAlerts.length > 0 && (
-        <div className="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-auto animate-slideDown">
+        <div className="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-auto animate-fadeIn">
           {delayAlerts.map((alert) => (
             <div
               key={alert.id}
-              className="p-4 rounded-2xl bg-gradient-to-r from-red-950/90 to-slate-900/95 border-2 border-red-500/50 shadow-2xl backdrop-blur-xl text-white space-y-2 relative overflow-hidden"
+              className="p-4 rounded-3xl bg-red-950/90 border-2 border-red-500 shadow-2xl backdrop-blur-xl text-white space-y-2 relative"
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2 text-red-400 font-extrabold text-sm">
-                  <AlertTriangle className="w-5 h-5 animate-bounce text-red-400 shrink-0" />
-                  <span>🚨 LATE BUS ALERT (+{alert.delayMinutes}m)</span>
+                <div className="flex items-center gap-2 text-red-400 font-extrabold text-xs">
+                  <AlertTriangle className="w-4 h-4 animate-bounce shrink-0" />
+                  <span>LATE BUS ALERT (+{alert.delayMinutes}m)</span>
                 </div>
                 <button
                   onClick={() => dismissAlert(alert.id)}
@@ -118,19 +117,13 @@ export const AdminLayout: React.FC = () => {
               </div>
 
               <div>
-                <div className="font-bold text-base text-white">
+                <div className="font-extrabold text-sm text-white">
                   Bus {alert.busNumber} • {alert.routeName}
                 </div>
                 <div className="text-xs text-slate-300 mt-0.5 flex items-center justify-between">
                   <span>Driver: {alert.driverName}</span>
                   <span className="font-mono text-[11px] text-red-300">{alert.timestamp}</span>
                 </div>
-                {alert.driverPhone && alert.driverPhone !== 'N/A' && (
-                  <div className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
-                    <Phone className="w-3 h-3" />
-                    <span>{alert.driverPhone}</span>
-                  </div>
-                )}
               </div>
 
               <div className="flex items-center gap-2 pt-1">
@@ -139,21 +132,10 @@ export const AdminLayout: React.FC = () => {
                     navigate(`/admin/live-map?focusBusId=${alert.busId}`);
                     dismissAlert(alert.id);
                   }}
-                  className="flex-1 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-red-600/40 transition-all"
+                  className="btn-pill-primary text-xs py-1.5 px-3 flex-1"
                 >
                   <Radio className="w-3.5 h-3.5 animate-pulse" />
-                  Track Live Radar
-                </button>
-
-                <button
-                  onClick={() => {
-                    navigate('/admin/arrivals');
-                    dismissAlert(alert.id);
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs flex items-center gap-1"
-                >
-                  Reports
-                  <ChevronRight className="w-3 h-3" />
+                  <span>Track Radar</span>
                 </button>
               </div>
             </div>
@@ -161,41 +143,40 @@ export const AdminLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Sidebar (iPhone Water UI Glass) */}
-      <aside className="w-full md:w-64 water-glass border-r border-white/10 flex flex-col justify-between shrink-0 shadow-2xl m-3 rounded-3xl">
+      {/* Sidebar with Frosted Glass Surface */}
+      <aside className="w-full md:w-64 water-glass border-r border-black/5 dark:border-white/10 flex flex-col justify-between shrink-0 shadow-glass m-3 rounded-3xl">
         <div>
-          {/* Logo & College Banner + Theme Toggle */}
-          <div className="p-5 border-b border-white/10 flex items-center justify-between gap-3">
+          {/* Logo & College Banner */}
+          <div className="p-5 border-b border-black/5 dark:border-white/10 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-600/30 shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow shadow-pill-teal shrink-0">
                 <Shield className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <h2 className="font-black text-base tracking-tight truncate drop-shadow-sm card-title">
+                <h2 className="font-black text-sm tracking-tight truncate">
                   Admin Console
                 </h2>
-                <span className="text-xs text-purple-600 dark:text-purple-300 truncate block font-bold">
-                  {user?.college?.name || 'College Admin'}
+                <span className="text-[11px] font-bold text-brand-700 dark:text-pastel-softTeal truncate block">
+                  {user?.college?.name || 'SRGEC Fleet'}
                 </span>
               </div>
             </div>
 
-            {/* Compact Theme Switcher */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl border transition-all theme-toggle-btn shadow-md shrink-0"
+              className="p-2 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/10 hover:bg-white transition-all shadow-sm shrink-0"
               title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
             >
               {theme === 'light' ? (
-                <Moon className="w-4 h-4 text-indigo-600" />
+                <Moon className="w-4 h-4 text-brand-600" />
               ) : (
-                <Sun className="w-4 h-4 text-amber-300" />
+                <Sun className="w-4 h-4 text-pastel-yellow" />
               )}
             </button>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="p-3 space-y-1.5">
+          {/* Navigation Links with Yellow Active Pill */}
+          <nav className="p-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -204,22 +185,22 @@ export const AdminLayout: React.FC = () => {
                   to={item.to}
                   end={item.to === '/admin/dashboard'}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-full text-xs font-black transition-all ${
                       isActive
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-500 text-white shadow-lg shadow-purple-600/30'
-                        : 'text-slate-800 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white'
+                        ? 'bg-pastel-yellow text-pastel-darkText shadow-pill-yellow scale-[1.02]'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5'
                     }`
                   }
                 >
-                  <Icon className={`w-4 h-4 shrink-0 ${item.highlight ? 'text-emerald-500 dark:text-emerald-400' : ''}`} />
+                  <Icon className="w-4 h-4 shrink-0" />
                   <span>{item.label}</span>
                   {item.badge && (
-                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-extrabold">
+                    <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-pastel-mint text-brand-900 font-extrabold">
                       {item.badge}
                     </span>
                   )}
                   {item.highlight && (
-                    <span className="ml-auto w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping"></span>
+                    <span className="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                   )}
                 </NavLink>
               );
@@ -228,29 +209,29 @@ export const AdminLayout: React.FC = () => {
         </div>
 
         {/* User Info & Logout */}
-        <div className="p-4 border-t border-white/10 space-y-3">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-white/20 flex items-center justify-center text-xs font-black text-slate-800 dark:text-white">
+        <div className="p-4 border-t border-black/5 dark:border-white/10 space-y-3">
+          <div className="flex items-center gap-2.5 px-1">
+            <div className="w-8 h-8 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center text-xs font-black">
               {user?.name ? user.name[0] : 'A'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-800 dark:text-white truncate">{user?.name}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-300 truncate font-mono">{user?.email}</p>
+              <p className="text-xs font-black truncate">{user?.name}</p>
+              <p className="text-[10px] subtext-muted truncate font-mono">{user?.email}</p>
             </div>
           </div>
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 nav-logout-btn py-2 rounded-xl text-xs font-bold transition-all shadow-md"
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-extrabold border border-red-500/20 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 transition-all shadow-sm"
           >
             <LogOut className="w-3.5 h-3.5" />
-            Sign Out
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto min-h-screen p-3 md:p-6">
+      <main className="flex-1 overflow-y-auto min-h-screen p-3 md:p-6 pb-20">
         <Outlet />
       </main>
     </div>

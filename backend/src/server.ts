@@ -13,10 +13,18 @@ import adminRoutes from './routes/admin.routes';
 const app = express();
 const server = http.createServer(app);
 
+// Support dynamic CORS origins for Vercel, localhost, and production deployments
+const allowedOriginConfig =
+  !ENV.CORS_ORIGIN || ENV.CORS_ORIGIN === '*'
+    ? true // Reflects requesting origin to allow credentials: true with all origins
+    : ENV.CORS_ORIGIN.includes(',')
+    ? ENV.CORS_ORIGIN.split(',').map((o) => o.trim())
+    : ENV.CORS_ORIGIN;
+
 // Initialize Socket.IO with CORS
 const io = new SocketIOServer(server, {
   cors: {
-    origin: ENV.CORS_ORIGIN,
+    origin: allowedOriginConfig,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -28,7 +36,7 @@ const io = new SocketIOServer(server, {
 app.set('io', io);
 
 // Middleware
-app.use(cors({ origin: ENV.CORS_ORIGIN, credentials: true }));
+app.use(cors({ origin: allowedOriginConfig, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

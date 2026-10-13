@@ -4,63 +4,59 @@
 
 @layer base {
   /* ==========================================================================
-     SOLID MODERN BASE THEME (Mobile-First & High-Contrast)
+     PASTEL GLASSMORPHISM BASE THEME (Warm Yellow, Cream, Mint, Teal)
      ========================================================================== */
   :root {
-    --bg-primary: #0b0f19;
-    --bg-surface: #131b2e;
-    --bg-surface-elevated: #1e293b;
-    --border-subtle: #22304d;
-    --border-strong: #334155;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --accent-blue: #0284c7;
-    --accent-emerald: #059669;
-    --accent-purple: #7c3aed;
+    --bg-cream: #FFF7DF;
+    --bg-mint: #D5E9DE;
+    --bg-soft-teal: #75AFA5;
+    --brand-deep-teal: #285D59;
+    --accent-yellow: #FFD166;
+    --text-dark: #172522;
+    --text-muted: #4A605C;
+    --surface-glass-light: rgba(255, 255, 255, 0.78);
+    --border-glass-light: rgba(255, 255, 255, 0.85);
   }
 
-  html:not(.light-theme),
-  body:not(.light-theme) {
-    background-color: #0b0f19 !important;
-    color: #f8fafc !important;
-  }
-
+  /* LIGHT THEME (Default) */
+  html:not(.dark),
+  body:not(.dark),
   html.light-theme,
   body.light-theme {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
+    background: radial-gradient(circle at 10% 10%, #FFF7DF 0%, transparent 40%),
+                radial-gradient(circle at 90% 15%, #D5E9DE 0%, transparent 45%),
+                radial-gradient(circle at 50% 85%, #E3F1EC 0%, transparent 50%),
+                #FAF8F2 !important;
+    background-attachment: fixed !important;
+    color: #172522 !important;
+  }
+
+  /* DARK THEME */
+  html.dark,
+  body.dark,
+  html:not(.light-theme):not(:has(.light-theme)),
+  body:not(.light-theme) {
+    background: radial-gradient(circle at 15% 15%, rgba(40, 93, 89, 0.45) 0%, transparent 55%),
+                radial-gradient(circle at 85% 85%, rgba(24, 59, 56, 0.55) 0%, transparent 60%),
+                radial-gradient(circle at 50% 50%, rgba(13, 28, 27, 0.9) 0%, transparent 70%),
+                #0D1C1B !important;
+    background-attachment: fixed !important;
+    color: #F4F9F8 !important;
   }
 
   body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    color: #f8fafc;
-    background-color: #0b0f19;
     font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
     overflow-x: hidden;
     touch-action: manipulation;
   }
 
-  /* LIGHT THEME */
-  body.light-theme {
-    --bg-primary: #f8fafc;
-    --bg-surface: #ffffff;
-    --bg-surface-elevated: #f1f5f9;
-    --border-subtle: #e2e8f0;
-    --border-strong: #cbd5e1;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    color: #0f172a !important;
-    background-color: #f8fafc !important;
-  }
-
-  /* Form & Interactive Ergonomics (min 44px touch targets on mobile) */
+  /* Mobile Ergonomics (Min 44px-48px touch targets, zero tap highlight) */
   input, select, textarea, button, a {
     -webkit-tap-highlight-color: transparent;
   }
@@ -71,114 +67,262 @@
 }
 
 /* ==========================================================================
-   SOLID PROFESSIONAL SURFACES (Zero Transparency Artifacts)
+   FROSTED GLASSMORPHISM SURFACES (Translucent, Subtle Borders, Soft Shadows)
    ========================================================================== */
 
-/* Dark Mode Surface Defaults */
+/* Light Mode Glass Surface */
 .water-glass,
 .glass-panel,
 .app-card {
-  background-color: #131c31 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid #233253 !important;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
-  color: #f8fafc;
-  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 12px 32px -4px rgba(40, 93, 89, 0.08), 0 4px 12px -2px rgba(40, 93, 89, 0.04) !important;
+  color: #172522 !important;
+  border-radius: 1.75rem !important;
 }
 
 .water-glass-subtle,
 .glass-card,
 .app-card-elevated {
-  background-color: #1a2540 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid #2d3f66 !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
-  color: #f8fafc;
-  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 6px 20px -2px rgba(40, 93, 89, 0.06) !important;
+  color: #172522 !important;
+  border-radius: 1.25rem !important;
+}
+
+/* Dark Mode Glass Surface */
+body:not(.light-theme) .water-glass,
+body:not(.light-theme) .glass-panel,
+body:not(.light-theme) .app-card {
+  background: rgba(18, 41, 39, 0.82) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(117, 175, 165, 0.25) !important;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5) !important;
+  color: #F4F9F8 !important;
+}
+
+body:not(.light-theme) .water-glass-subtle,
+body:not(.light-theme) .glass-card,
+body:not(.light-theme) .app-card-elevated {
+  background: rgba(24, 53, 50, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(117, 175, 165, 0.2) !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4) !important;
+  color: #F4F9F8 !important;
 }
 
 .water-glass-glow {
-  box-shadow: 0 0 0 1px #38bdf8, 0 10px 25px -5px rgba(14, 165, 233, 0.3) !important;
+  box-shadow: 0 0 0 2px #FFD166, 0 14px 30px -4px rgba(255, 209, 102, 0.35) !important;
 }
 
+/* ==========================================================================
+   INPUTS & DROPDOWNS (Glass Frosted with Teal/Yellow Focus)
+   ========================================================================== */
 .water-glass-input,
 .app-input {
-  background-color: #0f172a !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid #334155 !important;
-  color: #f8fafc !important;
-  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1.5px solid rgba(117, 175, 165, 0.35) !important;
+  color: #172522 !important;
+  border-radius: 1rem !important;
+  transition: all 0.2s ease;
 }
 
 .water-glass-input:focus,
 .app-input:focus {
-  border-color: #38bdf8 !important;
+  border-color: #285D59 !important;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+  box-shadow: 0 0 0 3px rgba(40, 93, 89, 0.2) !important;
 }
 
 .water-glass-input::placeholder,
 .app-input::placeholder {
-  color: #64748b !important;
+  color: #75AFA5 !important;
+}
+
+/* Dark Mode Inputs */
+body:not(.light-theme) .water-glass-input,
+body:not(.light-theme) .app-input {
+  background: rgba(14, 33, 31, 0.9) !important;
+  border: 1.5px solid rgba(117, 175, 165, 0.3) !important;
+  color: #F4F9F8 !important;
+}
+
+body:not(.light-theme) .water-glass-input:focus,
+body:not(.light-theme) .app-input:focus {
+  border-color: #FFD166 !important;
+  box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.25) !important;
+}
+
+body:not(.light-theme) .water-glass-input::placeholder,
+body:not(.light-theme) .app-input::placeholder {
+  color: #75AFA5 !important;
 }
 
 /* ==========================================================================
-   LIGHT MODE SOLID SURFACES
+   PILL BUTTONS & TOUCH TARGETS (48px+ on mobile)
    ========================================================================== */
-.light-theme .water-glass,
-.light-theme .glass-panel,
-.light-theme .app-card {
-  background-color: #ffffff !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 4px 16px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04) !important;
-  color: #0f172a !important;
+.btn-pill-primary {
+  background-color: #285D59 !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  font-weight: 800 !important;
+  padding: 0.75rem 1.5rem !important;
+  box-shadow: 0 6px 20px -2px rgba(40, 93, 89, 0.3) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.light-theme .water-glass-subtle,
-.light-theme .glass-card,
-.light-theme .app-card-elevated {
-  background-color: #f8fafc !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
-  color: #0f172a !important;
+.btn-pill-primary:hover {
+  background-color: #1F4946 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -2px rgba(40, 93, 89, 0.4) !important;
 }
 
-.light-theme .water-glass-glow {
-  box-shadow: 0 0 0 1px #0284c7, 0 10px 25px -5px rgba(2, 132, 199, 0.2) !important;
+.btn-pill-primary:active {
+  transform: scale(0.98);
 }
 
-.light-theme .water-glass-input,
-.light-theme .app-input {
-  background-color: #ffffff !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: 1.5px solid #cbd5e1 !important;
-  color: #0f172a !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+.btn-pill-yellow {
+  background-color: #FFD166 !important;
+  color: #172522 !important;
+  border-radius: 9999px !important;
+  font-weight: 800 !important;
+  padding: 0.75rem 1.5rem !important;
+  box-shadow: 0 6px 20px -2px rgba(255, 209, 102, 0.45) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.light-theme .water-glass-input:focus,
-.light-theme .app-input:focus {
-  border-color: #0284c7 !important;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+.btn-pill-yellow:hover {
+  background-color: #FFC94D !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -2px rgba(255, 209, 102, 0.55) !important;
 }
 
-.light-theme .water-glass-input::placeholder,
-.light-theme .app-input::placeholder {
-  color: #94a3b8 !important;
+.btn-pill-yellow:active {
+  transform: scale(0.98);
+}
+
+.btn-pill-secondary {
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #285D59 !important;
+  border: 1px solid rgba(40, 93, 89, 0.2) !important;
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  padding: 0.65rem 1.25rem !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-pill-secondary:hover {
+  background: rgba(213, 233, 222, 0.7) !important;
+  color: #183B38 !important;
+}
+
+body:not(.light-theme) .btn-pill-secondary {
+  background: rgba(24, 53, 50, 0.8) !important;
+  color: #D5E9DE !important;
+  border: 1px solid rgba(117, 175, 165, 0.3) !important;
+}
+
+body:not(.light-theme) .btn-pill-secondary:hover {
+  background: rgba(40, 93, 89, 0.9) !important;
+  color: #FFFFFF !important;
 }
 
 /* ==========================================================================
-   HIGH-CONTRAST TYPOGRAPHY & HERO GRADIENTS
+   FLOATING BOTTOM NAVIGATION (Mobile Dock with Yellow Active Indicator)
    ========================================================================== */
+.floating-bottom-nav {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  width: calc(100% - 2rem);
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 16px 40px -4px rgba(40, 93, 89, 0.18), 0 4px 16px -2px rgba(40, 93, 89, 0.08);
+  border-radius: 9999px;
+  padding: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body:not(.light-theme) .floating-bottom-nav {
+  background: rgba(16, 36, 34, 0.92);
+  border: 1px solid rgba(117, 175, 165, 0.35);
+  box-shadow: 0 20px 48px -6px rgba(0, 0, 0, 0.6);
+}
+
+.nav-pill-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4A605C;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  flex: 1;
+  text-decoration: none;
+  min-height: 46px;
+}
+
+body:not(.light-theme) .nav-pill-item {
+  color: #94AFA8;
+}
+
+.nav-pill-item.active {
+  background-color: #FFD166 !important;
+  color: #172522 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 4px 14px 0 rgba(255, 209, 102, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.nav-pill-item:active {
+  transform: scale(0.96);
+}
+
+/* ==========================================================================
+   TYPOGRAPHY & HIERARCHY
+   ========================================================================== */
+h1, h2, h3, h4, h5, h6,
+.card-title,
+.brand-title,
+.page-title {
+  color: #172522;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
 body:not(.light-theme) h1,
 body:not(.light-theme) h2,
 body:not(.light-theme) h3,
@@ -187,66 +331,31 @@ body:not(.light-theme) h5,
 body:not(.light-theme) h6,
 body:not(.light-theme) .card-title,
 body:not(.light-theme) .brand-title,
-body:not(.light-theme) .page-title,
-body:not(.light-theme) .form-title {
-  color: #ffffff !important;
-  font-weight: 800 !important;
+body:not(.light-theme) .page-title {
+  color: #F4F9F8 !important;
 }
 
-body:not(.light-theme) .card-desc {
-  color: #cbd5e1 !important;
+.subtext-muted {
+  color: #4A605C !important;
   font-weight: 500;
 }
 
 body:not(.light-theme) .subtext-muted {
-  color: #94a3b8 !important;
+  color: #94AFA8 !important;
+}
+
+.card-desc {
+  color: #334A46 !important;
   font-weight: 500;
 }
 
-body:not(.light-theme) .feature-item-text {
-  color: #f1f5f9 !important;
+body:not(.light-theme) .card-desc {
+  color: #B5CCC7 !important;
 }
 
-body:not(.light-theme) .form-label {
-  color: #cbd5e1 !important;
-}
-
-/* Light Theme Typography */
-.light-theme h1,
-.light-theme h2,
-.light-theme h3,
-.light-theme h4,
-.light-theme h5,
-.light-theme h6,
-.light-theme .card-title,
-.light-theme .brand-title,
-.light-theme .page-title,
-.light-theme .form-title {
-  color: #0f172a !important;
-  font-weight: 800 !important;
-}
-
-.light-theme .card-desc {
-  color: #475569 !important;
-  font-weight: 500 !important;
-}
-
-.light-theme .subtext-muted {
-  color: #475569 !important;
-  font-weight: 500 !important;
-}
-
-.light-theme .feature-item-text {
-  color: #1e293b !important;
-}
-
-.light-theme .form-label {
-  color: #334155 !important;
-}
-
-/* Dynamic Hero Gradient Text */
+/* Hero Gradient Text (Warm Teal to Mint) */
 .hero-gradient-text {
-  background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 50%, #a78bfa 100%) !important;
+  background: linear-gradient(135deg, #285D59 0%, #4D968B 50%, #FFD166 100%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -254,304 +363,105 @@ body:not(.light-theme) .form-label {
   font-weight: 900;
 }
 
-.light-theme .hero-gradient-text {
-  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #7c3aed 100%) !important;
+body:not(.light-theme) .hero-gradient-text {
+  background: linear-gradient(135deg, #75AFA5 0%, #D5E9DE 50%, #FFD166 100%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
-  display: inline-block;
-  font-weight: 900;
 }
 
-/* Status Pill in Hero */
+/* Hero Status Pill */
 .hero-status-pill {
-  background: #131c31;
-  border: 1px solid #2d3f66;
-  color: #38bdf8;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(213, 233, 222, 0.9);
+  color: #285D59;
+  box-shadow: 0 4px 12px rgba(40, 93, 89, 0.08);
 }
 
-.light-theme .hero-status-pill {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.1);
+body:not(.light-theme) .hero-status-pill {
+  background: rgba(24, 53, 50, 0.85);
+  border: 1px solid rgba(117, 175, 165, 0.35);
+  color: #D5E9DE;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
-/* Card Icons */
-.card-icon-blue {
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(37, 99, 235, 0.35));
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  color: #38bdf8;
-}
-
-.light-theme .card-icon-blue {
-  background: #e0f2fe;
-  border: 1px solid #bae6fd;
-  color: #0284c7;
-}
-
-.card-icon-emerald {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(13, 148, 136, 0.35));
-  border: 1px solid rgba(52, 211, 153, 0.4);
-  color: #34d399;
-}
-
-.light-theme .card-icon-emerald {
-  background: #d1fae5;
-  border: 1px solid #a7f3d0;
-  color: #059669;
-}
-
-.card-icon-purple {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(124, 58, 237, 0.35));
-  border: 1px solid rgba(192, 132, 252, 0.4);
-  color: #c084fc;
-}
-
-.light-theme .card-icon-purple {
-  background: #f3e8ff;
-  border: 1px solid #e9d5ff;
-  color: #7c3aed;
-}
-
-/* Secondary Portal Buttons */
-.btn-secondary-blue {
-  background-color: #1a2540;
-  border: 1px solid #2d3f66;
-  color: #38bdf8;
-  font-weight: 700;
-}
-
-.btn-secondary-blue:hover {
-  background-color: #233253;
-  color: #7dd3fc;
-}
-
-.light-theme .btn-secondary-blue {
-  background-color: #f0f9ff;
-  border: 1px solid #bae6fd;
-  color: #0284c7;
-}
-
-.light-theme .btn-secondary-blue:hover {
-  background-color: #e0f2fe;
-}
-
-.btn-secondary-emerald {
-  background-color: #1a2540;
-  border: 1px solid #2d3f66;
-  color: #34d399;
-  font-weight: 700;
-}
-
-.btn-secondary-emerald:hover {
-  background-color: #233253;
-  color: #6ee7b7;
-}
-
-.light-theme .btn-secondary-emerald {
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #059669;
-}
-
-.light-theme .btn-secondary-emerald:hover {
-  background-color: #d1fae5;
-}
-
-.btn-secondary-purple {
-  background-color: #1a2540;
-  border: 1px solid #2d3f66;
-  color: #c084fc;
-  font-weight: 700;
-}
-
-.btn-secondary-purple:hover {
-  background-color: #233253;
-  color: #d8b4fe;
-}
-
-.light-theme .btn-secondary-purple {
-  background-color: #faf5ff;
-  border: 1px solid #e9d5ff;
-  color: #7c3aed;
-}
-
-.light-theme .btn-secondary-purple:hover {
-  background-color: #f3e8ff;
-}
-
-/* ==========================================================================
-   BUTTONS & TOUCH TARGETS (Min 48px on mobile)
-   ========================================================================== */
-.touch-btn {
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.25rem;
-  font-weight: 600;
-  border-radius: 0.75rem;
-  transition: all 0.15s ease-in-out;
-  user-select: none;
-}
-
-.touch-btn:active {
-  transform: scale(0.98);
-}
-
-/* Action button gradients retain solid white text */
-.bg-blue-600, .bg-emerald-600, .bg-purple-600, .bg-red-600, .bg-amber-600,
-.from-blue-600, .from-emerald-600, .from-purple-600, .from-red-600, .from-cyan-600 {
-  color: #ffffff !important;
-}
-
-.bg-blue-600 *, .bg-emerald-600 *, .bg-purple-600 *, .bg-red-600 *, .bg-amber-600 *,
-.from-blue-600 *, .from-emerald-600 *, .from-purple-600 *, .from-red-600 *, .from-cyan-600 * {
-  color: #ffffff !important;
-}
-
-/* ==========================================================================
-   ROLE BADGES & SOLID ACCENTS
-   ========================================================================== */
+/* Role Badges */
 .role-badge-student {
-  background: rgba(59, 130, 246, 0.15);
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  color: #60a5fa;
-  font-weight: 600;
-}
-
-.light-theme .role-badge-student {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
+  background: #FFF7DF;
+  border: 1px solid #FFD166;
+  color: #8C6500;
+  font-weight: 700;
 }
 
 .role-badge-driver {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  color: #34d399;
-  font-weight: 600;
-}
-
-.light-theme .role-badge-driver {
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #047857;
+  background: #D5E9DE;
+  border: 1px solid #75AFA5;
+  color: #183B38;
+  font-weight: 700;
 }
 
 .role-badge-admin {
-  background: rgba(168, 85, 247, 0.15);
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  color: #c084fc;
-  font-weight: 600;
+  background: #F0F4FF;
+  border: 1px solid #CBD5E1;
+  color: #1E293B;
+  font-weight: 700;
 }
 
-.light-theme .role-badge-admin {
-  background: #faf5ff;
-  border: 1px solid #e9d5ff;
-  color: #7e22ce;
+body:not(.light-theme) .role-badge-student {
+  background: rgba(255, 209, 102, 0.15);
+  border: 1px solid rgba(255, 209, 102, 0.4);
+  color: #FFD166;
 }
 
-/* Navigation buttons */
-.light-theme .theme-toggle-btn,
-.light-theme .nav-user-btn,
-.light-theme .nav-logout-btn {
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
+body:not(.light-theme) .role-badge-driver {
+  background: rgba(117, 175, 165, 0.2);
+  border: 1px solid rgba(117, 175, 165, 0.45);
+  color: #D5E9DE;
 }
 
-.light-theme .nav-logout-btn:hover {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-  color: #dc2626;
-}
-
-/* Tailwind Slate Overrides for Light Mode */
-.light-theme .bg-slate-900,
-.light-theme .bg-slate-950,
-.light-theme .bg-slate-900\/40,
-.light-theme .bg-slate-900\/50,
-.light-theme .bg-slate-900\/60,
-.light-theme .bg-slate-900\/70,
-.light-theme .bg-slate-900\/80,
-.light-theme .bg-slate-900\/90,
-.light-theme .bg-slate-950\/60,
-.light-theme .bg-slate-950\/70,
-.light-theme .bg-slate-950\/80 {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-.light-theme .bg-slate-800,
-.light-theme .bg-slate-800\/40,
-.light-theme .bg-slate-800\/60,
-.light-theme .bg-slate-800\/80,
-.light-theme .bg-slate-800\/90 {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-.light-theme .border-white\/5,
-.light-theme .border-white\/10,
-.light-theme .border-white\/15,
-.light-theme .border-white\/20,
-.light-theme .border-slate-800,
-.light-theme .border-slate-700 {
-  border-color: #e2e8f0 !important;
-}
-
-.light-theme .text-slate-100,
-.light-theme .text-slate-200,
-.light-theme .text-white {
-  color: #0f172a !important;
-}
-
-.light-theme .text-slate-300,
-.light-theme .text-slate-400 {
-  color: #475569 !important;
+body:not(.light-theme) .role-badge-admin {
+  background: rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #E2E8F0;
 }
 
 /* ==========================================================================
-   LEAFLET MAP INTEGRATION & CLEAN POPUPS
+   LEAFLET MAP CONTAINER & POPUP OVERRIDES
    ========================================================================== */
 .leaflet-container {
   width: 100%;
   height: 100%;
   z-index: 10;
-  background-color: #0f172a;
+  border-radius: 1.5rem;
+  background-color: #E6EFEA;
 }
 
-.light-theme .leaflet-container {
-  background-color: #f8fafc;
+body:not(.light-theme) .leaflet-container {
+  background-color: #0E211F;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #1e293b !important;
-  color: #f8fafc !important;
-  border-radius: 0.875rem !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
-  border: 1px solid #334155 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #172522 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 10px 25px rgba(40, 93, 89, 0.15) !important;
+  border: 1px solid rgba(117, 175, 165, 0.3) !important;
   padding: 0.25rem !important;
 }
 
 .leaflet-popup-tip {
-  background: #1e293b !important;
+  background: rgba(255, 255, 255, 0.95) !important;
 }
 
-.light-theme .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12) !important;
+body:not(.light-theme) .leaflet-popup-content-wrapper {
+  background: rgba(18, 41, 39, 0.95) !important;
+  color: #F4F9F8 !important;
+  border: 1px solid rgba(117, 175, 165, 0.35) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
 }
 
-.light-theme .leaflet-popup-tip {
-  background: #ffffff !important;
+body:not(.light-theme) .leaflet-popup-tip {
+  background: rgba(18, 41, 39, 0.95) !important;
 }
 
 /* Custom Scrollbars */
@@ -563,9 +473,19 @@ body:not(.light-theme) .form-label {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: rgba(117, 175, 165, 0.4);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.7);
+  background: rgba(40, 93, 89, 0.6);
+}
+
+/* Clean Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
 }
