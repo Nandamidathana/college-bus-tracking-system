@@ -21,6 +21,7 @@ import {
   X,
   ChevronRight,
   Phone,
+  Menu,
 } from 'lucide-react';
 
 interface DelayAlert {
@@ -40,6 +41,7 @@ export const AdminLayout: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [delayAlerts, setDelayAlerts] = useState<DelayAlert[]>([]);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -143,8 +145,52 @@ export const AdminLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Sidebar with Frosted Glass Surface */}
-      <aside className="w-full md:w-64 water-glass border-r border-black/5 dark:border-white/10 flex flex-col justify-between shrink-0 shadow-glass m-3 rounded-3xl">
+      {/* Mobile Top Header (Compact Bar with Drawer Toggle) */}
+      <div className="md:hidden flex items-center justify-between p-4 water-glass border-b border-black/5 dark:border-white/10 m-2 rounded-2xl shadow-sm z-30">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow shadow-pill-teal">
+            <Shield className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="font-black text-xs tracking-tight">Admin Console</h2>
+            <span className="text-[10px] font-bold text-brand-700 dark:text-pastel-softTeal truncate block max-w-[150px]">
+              {user?.college?.name || 'SRGEC Fleet'}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-white/70 dark:bg-white/10 border border-black/5 dark:border-white/10"
+            title="Toggle theme"
+          >
+            {theme === 'light' ? <Moon className="w-3.5 h-3.5 text-brand-600" /> : <Sun className="w-3.5 h-3.5 text-pastel-yellow" />}
+          </button>
+          <button
+            onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
+            className="p-2 rounded-full bg-pastel-yellow text-pastel-darkText shadow-pill-yellow font-bold"
+            aria-label="Toggle navigation drawer"
+          >
+            {mobileDrawerOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer Backdrop */}
+      {mobileDrawerOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          onClick={() => setMobileDrawerOpen(false)}
+        />
+      )}
+
+      {/* Sidebar: Slide-out drawer on Mobile, Fixed column on Desktop */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-72 md:w-64 water-glass border-r border-black/5 dark:border-white/10 flex flex-col justify-between shrink-0 shadow-glass md:m-3 md:rounded-3xl transition-transform duration-300 ease-in-out ${
+          mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
         <div>
           {/* Logo & College Banner */}
           <div className="p-5 border-b border-black/5 dark:border-white/10 flex items-center justify-between gap-3">
@@ -162,17 +208,25 @@ export const AdminLayout: React.FC = () => {
               </div>
             </div>
 
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/10 hover:bg-white transition-all shadow-sm shrink-0"
-              title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            >
-              {theme === 'light' ? (
-                <Moon className="w-4 h-4 text-brand-600" />
-              ) : (
-                <Sun className="w-4 h-4 text-pastel-yellow" />
-              )}
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={toggleTheme}
+                className="hidden md:inline-flex p-2 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/10 hover:bg-white transition-all shadow-sm shrink-0"
+                title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+              >
+                {theme === 'light' ? (
+                  <Moon className="w-4 h-4 text-brand-600" />
+                ) : (
+                  <Sun className="w-4 h-4 text-pastel-yellow" />
+                )}
+              </button>
+              <button
+                onClick={() => setMobileDrawerOpen(false)}
+                className="md:hidden p-2 rounded-full hover:bg-black/5"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Navigation Links with Yellow Active Pill */}
@@ -184,6 +238,7 @@ export const AdminLayout: React.FC = () => {
                   key={item.to}
                   to={item.to}
                   end={item.to === '/admin/dashboard'}
+                  onClick={() => setMobileDrawerOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3.5 py-2.5 rounded-full text-xs font-black transition-all ${
                       isActive

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Compass, Map, Route as RouteIcon, User, Sparkles } from 'lucide-react';
+import { Compass, Map, Route as RouteIcon, MapPin } from 'lucide-react';
 
-export type StudentNavTab = 'OVERVIEW' | 'MAP' | 'TIMELINE' | 'PROFILE';
+export type StudentNavTab = 'HOME' | 'MAP' | 'ROUTES' | 'MY_STOP';
 
 interface FloatingBottomNavProps {
   activeTab: StudentNavTab;
@@ -16,7 +16,7 @@ export const FloatingBottomNav: React.FC<FloatingBottomNavProps> = ({
 }) => {
   const tabs = [
     {
-      id: 'OVERVIEW' as StudentNavTab,
+      id: 'HOME' as StudentNavTab,
       label: 'Home',
       icon: Compass,
     },
@@ -27,14 +27,14 @@ export const FloatingBottomNav: React.FC<FloatingBottomNavProps> = ({
       badge: isLive ? 'LIVE' : undefined,
     },
     {
-      id: 'TIMELINE' as StudentNavTab,
-      label: 'Stops',
+      id: 'ROUTES' as StudentNavTab,
+      label: 'Routes',
       icon: RouteIcon,
     },
     {
-      id: 'PROFILE' as StudentNavTab,
+      id: 'MY_STOP' as StudentNavTab,
       label: 'My Stop',
-      icon: User,
+      icon: MapPin,
     },
   ];
 

@@ -55,7 +55,9 @@ export const StudentDashboard: React.FC = () => {
   const [locationSuccessMsg, setLocationSuccessMsg] = useState<string>('');
 
   // Active navigation tab for mobile floating bottom navigation
-  const [activeNavTab, setActiveNavTab] = useState<StudentNavTab>('OVERVIEW');
+  const [activeNavTab, setActiveNavTab] = useState<StudentNavTab>('HOME');
+  const [routeSearch, setRouteSearch] = useState<string>('');
+  const [expandedRouteId, setExpandedRouteId] = useState<string | null>(null);
 
   // Real-time Live Device GPS of the Student
   const [userLiveGps, setUserLiveGps] = useState<{ latitude: number; longitude: number; accuracy: number } | null>(null);
@@ -116,6 +118,51 @@ export const StudentDashboard: React.FC = () => {
     () => buses.filter((b) => checkBusServesBoardingStop(b, boardingPoint, student?.routeId)),
     [buses, boardingPoint, student?.routeId]
   );
+
+  // Aggregated list of routes for the Routes screen
+  const routesList = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; routeNumber: string; destination?: string; buses: Bus[]; stops: BoardingPoint[] }>();
+    buses.forEach((b) => {
+      if (b.route) {
+        const existing: { id: string; name: string; routeNumber: string; destination?: string; buses: Bus[]; stops: BoardingPoint[] } = map.get(b.route.id) || {
+          id: b.route.id,
+          name: b.route.name,
+          routeNumber: b.route.routeNumber || '',
+          destination: (b.route as any).destination || '',
+          buses: [],
+          stops: b.route.boardingPoints || [],
+        };
+        if (!existing.buses.some((item) => item.id === b.id)) {
+          existing.buses.push(b);
+        }
+        map.set(b.route.id, existing);
+      }
+    });
+
+    if (student?.route && !map.has(student.route.id)) {
+      map.set(student.route.id, {
+        id: student.route.id,
+        name: student.route.name,
+        routeNumber: student.route.routeNumber || '',
+        destination: (student.route as any).destination || '',
+        buses: buses.filter((b) => b.routeId === student.route?.id),
+        stops: student.route.boardingPoints || [],
+      });
+    }
+
+    return Array.from(map.values());
+  }, [buses, student?.route]);
+
+  const filteredRoutes = useMemo(() => {
+    if (!routeSearch.trim()) return routesList;
+    const q = routeSearch.toLowerCase();
+    return routesList.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.buses.some((b) => b.busNumber.toLowerCase().includes(q)) ||
+        r.stops.some((s) => s.name.toLowerCase().includes(q))
+    );
+  }, [routesList, routeSearch]);
 
   // 1. Continuous Watch for Student's Own Live Hardware GPS
   useEffect(() => {
@@ -523,473 +570,459 @@ export const StudentDashboard: React.FC = () => {
       />
 
       {/* Main Container - Extra bottom padding for mobile floating nav */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 space-y-6 pb-28 sm:pb-12">
-        {/* =========================================================================
-            1. PERSONALIZED WELCOME HEADER
-            ========================================================================= */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 water-glass rounded-3xl sm:rounded-4xl shadow-glass">
-          <div className="flex items-center gap-3.5">
-            <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 border-2 border-pastel-yellow/60 flex items-center justify-center text-white font-black text-xl shadow-pill-teal shrink-0">
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'S'}
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-pastel-darkText dark:text-white">
-                  {greeting}, {user?.name || 'Student'} 👋
-                </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-pastel-mint text-brand-900 border border-brand-400/40">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                  GPS Active
-                </span>
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-4 space-y-4 pb-28 sm:pb-14">
+        {/* TAB 1: HOME (Compact Header, Greeting, Main Bus Card, Boarding Stop Card, Small Map Preview) */}
+        {activeNavTab === 'HOME' && (
+          <div className="space-y-4 animate-fadeIn">
+            {/* 1. Compact Header */}
+            <div className="flex items-center justify-between py-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow shadow-pill-teal">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-xs font-black tracking-tight text-pastel-darkText dark:text-white block">
+                    College Bus Live
+                  </span>
+                  <span className="text-[10px] font-bold text-brand-700 dark:text-pastel-softTeal">
+                    {user?.college?.code || 'SRGEC'} Campus Transit
+                  </span>
+                </div>
               </div>
-              <p className="text-xs font-semibold subtext-muted mt-0.5">
-                {user?.college?.name || 'SRGEC Transit'} • Roll: <span className="font-mono font-bold text-brand-700 dark:text-pastel-softTeal">{student?.rollNumber || 'Enrolled'}</span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowVolunteerModal(true)}
+                  className={`p-2 rounded-full border transition-all ${
+                    isVolunteerMode
+                      ? 'bg-amber-400 text-slate-900 border-amber-500 animate-pulse'
+                      : 'water-glass-subtle hover:bg-white text-amber-700 dark:text-pastel-yellow border-black/5 dark:border-white/10'
+                  }`}
+                  title="Volunteer GPS Broadcast"
+                >
+                  <Radio className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowProfileModal(true)}
+                  className="w-9 h-9 rounded-full bg-brand-600 text-pastel-yellow font-black text-xs flex items-center justify-center border-2 border-pastel-yellow/60 shadow-sm hover:scale-105 transition-transform"
+                  title="Profile & Settings"
+                >
+                  {user?.name ? user.name[0].toUpperCase() : 'S'}
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Greeting */}
+            <div className="space-y-0.5 pt-1">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-pastel-darkText dark:text-white">
+                {greeting}, {user?.name || 'Student'} 👋
+              </h1>
+              <p className="text-xs font-semibold subtext-muted">
+                Roll: <span className="font-mono font-bold text-brand-700 dark:text-pastel-softTeal">{student?.rollNumber || 'Enrolled'}</span> • {user?.college?.name || 'SRGEC Campus'}
               </p>
             </div>
-          </div>
 
-          {/* Destination & Boarding Quick Pill */}
-          <div className="flex items-center gap-2 self-start sm:self-auto bg-white/70 dark:bg-white/10 px-3.5 py-2 rounded-full border border-black/5 dark:border-white/10 shadow-sm">
-            <MapPin className="w-4 h-4 text-brand-600 dark:text-pastel-softTeal shrink-0" />
-            <div className="text-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block leading-none">Your Boarding Stop</span>
-              <span className="font-extrabold text-pastel-darkText dark:text-white truncate max-w-[160px] sm:max-w-xs block">
-                {boardingPoint?.name || 'Not Configured'}
-              </span>
-            </div>
-            <button
-              onClick={() => setShowProfileModal(true)}
-              className="text-[11px] font-black text-brand-600 dark:text-pastel-yellow underline ml-1"
-            >
-              Edit
-            </button>
-          </div>
-        </div>
+            {/* 3. Main Bus Card */}
+            <div className="water-glass rounded-3xl p-5 sm:p-6 shadow-glass border border-white/80 space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-600 text-pastel-yellow flex items-center justify-center font-black text-lg shadow-pill-teal shrink-0">
+                    #{selectedBus?.busNumber || '—'}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="text-base sm:text-lg font-black text-pastel-darkText dark:text-white">
+                        {selectedBus ? `Bus #${selectedBus.busNumber}` : 'Select a Bus'}
+                      </h2>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                        isLiveState
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300'
+                          : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isLiveState ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`}></span>
+                        {isLiveState ? 'LIVE EN ROUTE' : 'IDLE / READY'}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold subtext-muted mt-0.5 truncate">
+                      Route: <span className="text-brand-700 dark:text-pastel-softTeal">{selectedBus?.route?.name || 'Transit Route'}</span>
+                    </p>
+                  </div>
+                </div>
 
-        {/* =========================================================================
-            2. QUICK-ACCESS CARDS (My Bus, Routes, Boarding Stop, 2km Radar)
-            ========================================================================= */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          {/* Card 1: My Bus */}
-          <div className="water-glass-subtle p-4 rounded-3xl flex flex-col justify-between space-y-2 hover:shadow-glass transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider subtext-muted">My Bus</span>
-              <div className="w-8 h-8 rounded-full bg-pastel-yellow/30 text-amber-900 dark:text-pastel-yellow flex items-center justify-center">
-                <BusIcon className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <span className="text-lg sm:text-xl font-black text-pastel-darkText dark:text-white block">
-                {selectedBus ? `Bus #${selectedBus.busNumber}` : 'Not Selected'}
-              </span>
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                {selectedBus?.assignedDriver?.driverName ? `Driver: ${selectedBus.assignedDriver.driverName}` : 'Select below'}
-              </span>
-            </div>
-          </div>
-
-          {/* Card 2: Active Route */}
-          <div className="water-glass-subtle p-4 rounded-3xl flex flex-col justify-between space-y-2 hover:shadow-glass transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider subtext-muted">Route Corridor</span>
-              <div className="w-8 h-8 rounded-full bg-pastel-mint text-brand-900 flex items-center justify-center">
-                <RouteIcon className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <span className="text-lg sm:text-xl font-black text-pastel-darkText dark:text-white block capitalize truncate">
-                {selectedBus?.route?.name || student?.route?.name || 'Transit Route'}
-              </span>
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                {selectedBus?.route?.boardingPoints?.length ? `${selectedBus.route.boardingPoints.length} Stops` : 'Official Transit'}
-              </span>
-            </div>
-          </div>
-
-          {/* Card 3: Boarding Stop */}
-          <div className="water-glass-subtle p-4 rounded-3xl flex flex-col justify-between space-y-2 hover:shadow-glass transition-all cursor-pointer" onClick={() => setShowProfileModal(true)}>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider subtext-muted">My Stop</span>
-              <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-800 flex items-center justify-center">
-                <MapPin className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <span className="text-lg sm:text-xl font-black text-pastel-darkText dark:text-white block truncate">
-                {boardingPoint?.name || 'Configure'}
-              </span>
-              <span className="text-[10px] font-bold text-brand-600 dark:text-pastel-softTeal">
-                Tap to change stop 📍
-              </span>
-            </div>
-          </div>
-
-          {/* Card 4: 2KM Proximity Radar */}
-          <div className="water-glass-subtle p-4 rounded-3xl flex flex-col justify-between space-y-2 hover:shadow-glass transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider subtext-muted">Proximity Radar</span>
-              <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 flex items-center justify-center">
-                <Radio className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <span className="text-lg sm:text-xl font-black text-pastel-darkText dark:text-white block">
-                {isLiveState ? '2 KM Radar Active' : 'Waiting for Bus'}
-              </span>
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                {isLiveState ? 'Automated push alerts' : 'Bus not on trip'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* =========================================================================
-            3. BUS SELECTION & FAST SWITCHER BAR
-            ========================================================================= */}
-        <div className="water-glass p-5 rounded-3xl shadow-glass space-y-3.5">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase tracking-wider text-brand-700 dark:text-pastel-softTeal">
-                Select Your Bus:
-              </span>
-            </div>
-
-            {/* Select Dropdown */}
-            <div className="flex items-center gap-2 flex-1 sm:max-w-md">
-              <div className="relative flex-1">
+                {/* Quick Bus Selector Dropdown */}
                 <select
                   value={selectedBusId}
                   onChange={(e) => {
                     setSelectedBusId(e.target.value);
                     autoSwitchedRef.current = false;
                   }}
-                  className="w-full water-glass-input text-pastel-darkText dark:text-white rounded-full px-4 py-2.5 pr-10 text-xs sm:text-sm font-extrabold appearance-none cursor-pointer focus:outline-none"
+                  className="text-xs font-extrabold water-glass-input rounded-full px-3 py-1.5 cursor-pointer max-w-[125px] sm:max-w-[170px] truncate shrink-0"
+                  aria-label="Switch tracked bus"
                 >
-                  <option value="" className="text-slate-400 font-bold">
-                    -- 🚌 Select Bus --
-                  </option>
-                  {buses.map((b) => {
-                    const isServesMyStop = checkBusServesBoardingStop(b, boardingPoint);
-                    const routeName = b.route?.name ? b.route.name.split('-')[0].trim() : 'Route';
-                    return (
-                      <option
-                        key={b.id}
-                        value={b.id}
-                        className={isServesMyStop ? 'font-bold text-brand-700' : ''}
-                      >
-                        Bus #{b.busNumber} ({routeName}) {isServesMyStop ? '⭐ [Your Stop]' : ''}
-                      </option>
-                    );
-                  })}
+                  <option value="">Switch Bus</option>
+                  {buses.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      Bus {b.busNumber} {checkBusServesBoardingStop(b, boardingPoint) ? '⭐' : ''}
+                    </option>
+                  ))}
                 </select>
-                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-brand-600 dark:text-pastel-yellow">
-                  <ChevronDown className="w-4 h-4 stroke-[2.5]" />
-                </div>
               </div>
 
-              {/* Volunteer Mode Pill Button */}
+              {/* Telemetry Row (Live ETA, Distance, Speed) */}
+              {isLiveState ? (
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-black/5 dark:border-white/10 text-center">
+                  <div className="p-2.5 rounded-2xl bg-pastel-cream/70 dark:bg-white/5">
+                    <span className="text-[10px] font-bold subtext-muted uppercase block">Arrival ETA</span>
+                    <span className="text-sm sm:text-base font-black text-brand-700 dark:text-pastel-yellow">~{displayEta} mins</span>
+                  </div>
+                  <div className="p-2.5 rounded-2xl bg-pastel-mint/50 dark:bg-white/5">
+                    <span className="text-[10px] font-bold subtext-muted uppercase block">Distance</span>
+                    <span className="text-sm sm:text-base font-black text-brand-900 dark:text-pastel-softTeal">{displayDistance}</span>
+                  </div>
+                  <div className="p-2.5 rounded-2xl bg-pastel-cream/70 dark:bg-white/5">
+                    <span className="text-[10px] font-bold subtext-muted uppercase block">Speed</span>
+                    <span className="text-sm sm:text-base font-black text-pastel-darkText dark:text-white">
+                      {liveLocation?.speed ? Math.round(liveLocation.speed) : 0} km/h
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-2 border-t border-black/5 dark:border-white/10 flex items-center justify-between text-xs subtext-muted font-bold">
+                  <span>Driver: {selectedBus?.assignedDriver?.driverName || 'Designated Driver'}</span>
+                  <span>Trip starts on schedule</span>
+                </div>
+              )}
+
+              {/* Route mismatch notice if applicable */}
+              {selectedBusId && !isBusServingStudentStop && boardingPoint && (
+                <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-900 dark:text-red-200 text-xs flex items-center justify-between gap-2">
+                  <span className="font-bold">⚠️ Doesn't pass {boardingPoint.name}</span>
+                  {preferredBuses[0] && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBusId(preferredBuses[0].id)}
+                      className="text-xs font-black underline text-red-700 dark:text-red-300"
+                    >
+                      Switch to Bus {preferredBuses[0].busNumber}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 4. Boarding Stop Card */}
+            <div className="water-glass rounded-3xl p-4 sm:p-5 shadow-glass border border-white/80 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-pastel-mint text-brand-900 flex items-center justify-center shrink-0">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black uppercase tracking-wider subtext-muted block">
+                    Boarding Stop
+                  </span>
+                  <span className="text-sm sm:text-base font-black text-pastel-darkText dark:text-white truncate block">
+                    {boardingPoint?.name || 'Not Configured'}
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    Destination: {user?.college?.name || 'SRGEC Campus'}
+                  </span>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowVolunteerModal(true)}
-                disabled={!selectedBusId}
-                className={`px-3.5 py-2.5 rounded-full text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-sm shrink-0 border ${
-                  !selectedBusId
-                    ? 'opacity-40 cursor-not-allowed bg-slate-200 text-slate-500 border-transparent'
-                    : isVolunteerMode
-                    ? 'bg-amber-500 text-slate-900 animate-pulse border-amber-300 font-black'
-                    : 'bg-white dark:bg-white/10 text-amber-700 dark:text-pastel-yellow hover:bg-amber-50 border-amber-300/50'
-                }`}
-                title="Volunteer GPS broadcast if driver device is offline"
+                onClick={() => setShowProfileModal(true)}
+                className="btn-pill-yellow text-xs py-2 px-4 shrink-0 font-black shadow-pill-yellow"
               >
-                <Radio className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isVolunteerMode ? 'Broadcasting' : 'Volunteer'}</span>
+                Edit
               </button>
+            </div>
 
-              {/* Refresh Button */}
+            {/* 5. Small Map Preview */}
+            <div className="water-glass rounded-3xl p-4 shadow-glass border border-white/80 space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-xs font-black uppercase tracking-wider text-pastel-darkText dark:text-white">
+                    Live Location Preview
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono text-brand-700 dark:text-pastel-softTeal font-bold">
+                  {isLiveState ? 'Broadcasting GPS' : 'Idle'}
+                </span>
+              </div>
+
+              <div className="h-48 sm:h-56 rounded-2xl overflow-hidden shadow-inner border border-black/5 dark:border-white/10 relative">
+                <BusMap
+                  busLocation={resolvedBusLocation}
+                  boardingPoint={boardingPoint || null}
+                  userLiveLocation={userLiveGps}
+                  customDestination={
+                    destinationLat && destinationLng
+                      ? {
+                          name: selectedBus?.route?.destination || 'Destination',
+                          latitude: destinationLat,
+                          longitude: destinationLng,
+                          isTerminus: true,
+                        }
+                      : null
+                  }
+                  college={user?.college || null}
+                  routeStops={selectedBus?.route?.boardingPoints || []}
+                  onRoadRouteCalculated={(data: any) => setRoadNavData(data)}
+                  show2kmCircle={true}
+                />
+              </div>
+
               <button
+                type="button"
+                onClick={() => setActiveNavTab('MAP')}
+                className="btn-pill-yellow w-full py-3 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-pill-yellow"
+              >
+                <span>Track Bus on Live Map</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: LIVE MAP (Full-Screen Map Focus + Floating Telemetry Sheet) */}
+        {activeNavTab === 'MAP' && (
+          <div className="space-y-3 animate-fadeIn">
+            {/* Compact Top Bar */}
+            <div className="flex items-center justify-between p-3.5 water-glass rounded-2xl shadow-sm">
+              <button
+                type="button"
+                onClick={() => setActiveNavTab('HOME')}
+                className="inline-flex items-center gap-1.5 text-xs font-black text-brand-700 dark:text-pastel-yellow hover:underline"
+              >
+                <span>← Home</span>
+              </button>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${isLiveState ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`}></span>
+                <span className="text-xs font-black">
+                  {selectedBus ? `Bus #${selectedBus.busNumber}` : 'Live Map'} • {isLiveState ? 'LIVE' : 'OFFLINE'}
+                </span>
+              </div>
+              <button
+                type="button"
                 onClick={() => selectedBusId && fetchBusStatus(selectedBusId)}
-                disabled={!selectedBusId}
-                className="p-2.5 rounded-full water-glass-subtle hover:bg-white text-brand-700 dark:text-pastel-yellow transition-all shrink-0 shadow-sm disabled:opacity-40"
-                title="Refresh Live Status"
+                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-brand-700 dark:text-pastel-yellow"
+                title="Refresh GPS"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
-          </div>
 
-          {/* Quick Bus Selection Chips with Warm Yellow Active Indicator */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-none">
-            {buses.map((b) => {
-              const isSelected = b.id === selectedBusId;
-              const isServesMyStop = checkBusServesBoardingStop(b, boardingPoint);
-              const isLive =
-                (b as any).status === 'LIVE' ||
-                (b as any).status === 'APPROACHING' ||
-                (b as any).status === 'NEARBY' ||
-                b.status === 'ACTIVE';
+            {/* Map Canvas with Floating Telemetry Sheet */}
+            <div className="h-[calc(100vh-230px)] min-h-[460px] rounded-3xl overflow-hidden relative shadow-glass border border-white/80">
+              <BusMap
+                busLocation={resolvedBusLocation}
+                boardingPoint={boardingPoint || null}
+                userLiveLocation={userLiveGps}
+                customDestination={
+                  destinationLat && destinationLng
+                    ? {
+                        name: selectedBus?.route?.destination || 'Destination',
+                        latitude: destinationLat,
+                        longitude: destinationLng,
+                        isTerminus: true,
+                      }
+                    : null
+                }
+                college={user?.college || null}
+                routeStops={selectedBus?.route?.boardingPoints || []}
+                onRoadRouteCalculated={(data: any) => setRoadNavData(data)}
+                show2kmCircle={true}
+              />
 
-              return (
-                <button
-                  key={b.id}
-                  onClick={() => {
-                    setSelectedBusId(b.id);
-                    autoSwitchedRef.current = false;
-                  }}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all shrink-0 border ${
-                    isSelected
-                      ? 'bg-pastel-yellow text-pastel-darkText border-amber-400 shadow-pill-yellow font-black scale-105'
-                      : isServesMyStop
-                      ? 'bg-pastel-mint/70 border-brand-400 text-brand-900 hover:bg-pastel-mint'
-                      : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      isLive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
-                    }`}
-                  ></span>
-                  <span>Bus {b.busNumber}</span>
-                  {isServesMyStop && (
-                    <span className="text-[9px] bg-brand-600 text-white px-1.5 py-0.2 rounded-full font-black">
-                      Your Stop
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* State 1: When no bus is selected yet */}
-        {!selectedBusId && (
-          <div className="water-glass rounded-3xl sm:rounded-4xl p-8 sm:p-12 text-center shadow-glass space-y-5 border-2 border-dashed border-brand-400/30 animate-fadeIn">
-            <div className="w-20 h-20 mx-auto rounded-full bg-pastel-yellow/30 border border-pastel-yellow flex items-center justify-center text-4xl shadow-pill-yellow animate-bounce">
-              🚌
-            </div>
-            <div className="max-w-md mx-auto space-y-2">
-              <h3 className="text-xl sm:text-2xl font-black text-pastel-darkText dark:text-white tracking-tight">
-                Select Your College Bus
-              </h3>
-              <p className="text-xs sm:text-sm subtext-muted leading-relaxed font-semibold">
-                Tap a bus above or pick from the dropdown to see live GPS location, road route, speed, and real-time arrival estimates.
-              </p>
-            </div>
-
-            {boardingPoint && preferredBuses.length > 0 && (
-              <div className="max-w-md mx-auto pt-5 border-t border-black/10 dark:border-white/10 space-y-2.5">
-                <span className="text-xs font-black uppercase tracking-wider text-brand-700 dark:text-pastel-softTeal block">
-                  ⭐ Recommended for {boardingPoint.name}:
-                </span>
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  {preferredBuses.map((pb) => (
-                    <button
-                      key={pb.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedBusId(pb.id);
-                        autoSwitchedRef.current = false;
-                      }}
-                      className="btn-pill-yellow text-xs gap-1.5 transform hover:scale-105 active:scale-95"
-                    >
-                      <span>🚌 Select Bus {pb.busNumber}</span>
-                      <span className="text-[10px] opacity-75 font-normal">
-                        ({pb.route?.name ? pb.route.name.split('-')[0].trim() : 'Route'})
+              {/* Floating Bottom Telemetry Card */}
+              <div className="absolute bottom-3 left-3 right-3 z-[1000] pointer-events-auto">
+                <div className="water-glass rounded-2xl p-3.5 shadow-2xl border border-white/90 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-pastel-darkText dark:text-white">
+                        Bus #{selectedBus?.busNumber || '—'}
                       </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* State 2: Off-Route Bus Mismatch Warning */}
-        {selectedBusId && !isBusServingStudentStop && boardingPoint && (
-          <div className="p-5 sm:p-6 rounded-3xl bg-red-500/10 border-2 border-red-500/50 text-red-900 dark:text-red-100 shadow-glass space-y-3 animate-fadeIn">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-red-500/20 text-red-600 dark:text-red-300 flex items-center justify-center text-xl shrink-0 font-black">
-                ⚠️
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-red-800 dark:text-red-200 bg-red-200 dark:bg-red-900/60 px-2.5 py-0.5 rounded-full">
-                    Route Mismatch
-                  </span>
-                  <span className="text-xs font-bold text-red-800 dark:text-red-200">
-                    Bus #{selectedBus?.busNumber} is on the {selectedBus?.route?.name || 'other'} corridor
-                  </span>
-                </div>
-                <h3 className="text-base font-black text-red-900 dark:text-white mt-1">
-                  This bus does not pass through your stop ({boardingPoint.name}).
-                </h3>
-              </div>
-            </div>
-
-            {preferredBuses.length > 0 && (
-              <div className="pt-3 border-t border-red-300 dark:border-red-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <span className="text-xs font-bold text-red-800 dark:text-red-200">
-                  Switch to your route's verified bus:
-                </span>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {preferredBuses.map((pb) => (
-                    <button
-                      key={pb.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedBusId(pb.id);
-                        autoSwitchedRef.current = false;
-                      }}
-                      className="btn-pill-primary text-xs py-2 px-4 gap-1.5"
-                    >
-                      <span>🚌 Switch to Bus {pb.busNumber}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* State 3: Bus Selected - PROMINENT LIVE TRACKING CARD & CONTENT */}
-        {selectedBusId && (
-          <>
-            {/* =========================================================================
-                PROMINENT LIVE TRACKING CARD (Hero Glassmorphism Card)
-                ========================================================================= */}
-            <div className="water-glass rounded-3xl sm:rounded-4xl p-6 sm:p-8 shadow-glass space-y-6 relative overflow-hidden">
-              {/* Background Ambient Glow */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-pastel-yellow/20 rounded-full blur-3xl pointer-events-none"></div>
-
-              {/* Top Row: Bus Identity & Live Telemetry Badges */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-14 h-14 rounded-2xl bg-brand-600 text-pastel-yellow flex items-center justify-center font-black text-xl shadow-pill-teal shrink-0">
-                    #{resolvedBusLocation?.busNumber || selectedBus?.busNumber}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-xl sm:text-2xl font-black text-pastel-darkText dark:text-white tracking-tight">
-                        Bus {resolvedBusLocation?.busNumber || selectedBus?.busNumber}
-                      </h2>
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm ${
-                        isLiveState
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300'
-                          : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                      }`}>
-                        <span className={`w-2 h-2 rounded-full ${isLiveState ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`}></span>
-                        {isLiveState ? (isReturnTrip ? 'RETURN EN ROUTE' : 'LIVE EN ROUTE') : 'IDLE / OFFLINE'}
+                      <span className="text-[10px] font-bold subtext-muted truncate max-w-[150px]">
+                        {selectedBus?.route?.name || 'Corridor'}
                       </span>
                     </div>
-                    <p className="text-xs font-bold subtext-muted mt-0.5">
-                      Corridor: <span className="text-brand-700 dark:text-pastel-softTeal">{selectedBus?.route?.name || 'Active Route'}</span>
+                    <span className="text-xs font-black text-brand-700 dark:text-pastel-yellow">
+                      {isLiveState ? `ETA: ~${displayEta}m` : 'Ready / Offline'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300 pt-1 border-t border-black/5 dark:border-white/10">
+                    <span>Speed: {liveLocation?.speed ? Math.round(liveLocation.speed) : 0} km/h</span>
+                    <span>Distance: {displayDistance}</span>
+                    <span>Stop: {boardingPoint?.name || 'Configured'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: ROUTES (Clean Searchable Routes List) */}
+        {activeNavTab === 'ROUTES' && (
+          <div className="space-y-4 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 water-glass rounded-3xl shadow-glass">
+              <div>
+                <h2 className="text-lg font-black text-pastel-darkText dark:text-white">College Bus Routes</h2>
+                <p className="text-xs subtext-muted font-semibold">Search routes and stop sequence</p>
+              </div>
+              <div className="relative max-w-xs w-full">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={routeSearch}
+                  onChange={(e) => setRouteSearch(e.target.value)}
+                  placeholder="Search route or stop..."
+                  className="w-full water-glass-input rounded-full pl-10 pr-4 py-2 text-xs font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {filteredRoutes.length === 0 ? (
+                <div className="p-8 text-center water-glass rounded-3xl subtext-muted text-xs font-bold">
+                  No matching routes found. Try searching by village or station name.
+                </div>
+              ) : (
+                filteredRoutes.map((r) => {
+                  const isExpanded = expandedRouteId === r.id;
+                  const servesMyStop = r.stops.some(
+                    (s) => s.id === boardingPoint?.id || s.name.toLowerCase() === (boardingPoint?.name || '').toLowerCase()
+                  );
+
+                  return (
+                    <div key={r.id} className="water-glass rounded-3xl p-5 shadow-glass border border-white/80 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-base font-black text-pastel-darkText dark:text-white capitalize">
+                              {r.name}
+                            </h3>
+                            {servesMyStop && (
+                              <span className="text-[10px] font-black bg-pastel-mint text-brand-900 px-2 py-0.5 rounded-full border border-brand-400">
+                                ⭐ Serves Your Stop
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs subtext-muted font-bold mt-0.5">
+                            {r.stops.length} Stops • Destination: {r.destination || user?.college?.name || 'Campus'}
+                          </p>
+                        </div>
+
+                        {/* Bus Track Button(s) */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {r.buses.map((b) => (
+                            <button
+                              key={b.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedBusId(b.id);
+                                setActiveNavTab('HOME');
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                                b.id === selectedBusId
+                                  ? 'bg-pastel-yellow text-pastel-darkText shadow-pill-yellow'
+                                  : 'bg-white/70 dark:bg-white/10 hover:bg-pastel-yellow/50'
+                              }`}
+                            >
+                              Track #{b.busNumber}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Expand/Collapse Stops Sequence */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedRouteId(isExpanded ? null : r.id)}
+                        className="text-xs font-extrabold text-brand-700 dark:text-pastel-softTeal flex items-center gap-1 hover:underline pt-1"
+                      >
+                        <span>{isExpanded ? 'Hide Stop Progression ▲' : `View ${r.stops.length} Stops Sequence ▼`}</span>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="pt-3 border-t border-black/5 dark:border-white/10 space-y-2">
+                          {r.stops.map((stop, idx) => {
+                            const isStudentStop =
+                              stop.id === boardingPoint?.id ||
+                              stop.name.toLowerCase() === (boardingPoint?.name || '').toLowerCase();
+
+                            return (
+                              <div key={stop.id || idx} className="flex items-center gap-2.5 text-xs">
+                                <span className="w-5 h-5 rounded-full bg-pastel-cream text-brand-900 font-black text-[10px] flex items-center justify-center shrink-0">
+                                  {idx + 1}
+                                </span>
+                                <span className={`font-bold ${isStudentStop ? 'text-brand-700 dark:text-pastel-yellow font-black' : ''}`}>
+                                  {stop.name} {isStudentStop ? '📍 (Your Boarding Point)' : ''}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: MY STOP (Boarding Stop Details, 2km Radar, and Stop Location Preview) */}
+        {activeNavTab === 'MY_STOP' && (
+          <div className="space-y-4 animate-fadeIn">
+            <div className="p-5 sm:p-6 water-glass rounded-3xl shadow-glass border border-white/80 space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-600 text-pastel-yellow flex items-center justify-center text-xl shadow-pill-teal shrink-0">
+                    📍
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider subtext-muted block">
+                      Assigned Boarding Stop
+                    </span>
+                    <h2 className="text-xl font-black text-pastel-darkText dark:text-white">
+                      {boardingPoint?.name || 'Not Configured'}
+                    </h2>
+                    <p className="text-xs subtext-muted font-bold">
+                      Route: {selectedBus?.route?.name || student?.route?.name || 'College Transit Corridor'}
                     </p>
                   </div>
                 </div>
-
-                {/* Road Navigation Phase Toggle Button (To My Stop vs To Campus) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setHasManuallyToggled(true);
-                    setNavigationTarget(navigationTarget === 'BOARDING_POINT' ? 'COLLEGE' : 'BOARDING_POINT');
-                  }}
-                  className="btn-pill-secondary text-xs gap-1.5 self-start sm:self-auto shadow-sm"
-                  title="Toggle road route focus"
+                  onClick={() => setShowProfileModal(true)}
+                  className="btn-pill-yellow text-xs py-2 px-4 font-black shadow-pill-yellow"
                 >
-                  <Repeat className="w-3.5 h-3.5" />
-                  <span>
-                    Focus: {navigationTarget === 'BOARDING_POINT' ? 'My Boarding Stop 📍' : 'Campus Gate 🎓'}
-                  </span>
+                  Edit Stop
                 </button>
               </div>
 
-              {/* Middle Row: Telemetry Metric Chips (Distance, ETA, Speed) */}
-              <div className="grid grid-cols-3 gap-2.5 sm:gap-4 pt-2">
-                {/* Distance Metric */}
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 text-center">
-                  <div className="w-7 h-7 mx-auto rounded-full bg-brand-100 text-brand-700 flex items-center justify-center mb-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider subtext-muted block">Road Dist</span>
-                  <span className="text-base sm:text-xl font-black text-pastel-darkText dark:text-white mt-0.5 block truncate">
-                    {displayDistance}
+              {/* Proximity 2 KM Radar Details */}
+              <div className="p-4 rounded-2xl bg-pastel-cream/70 dark:bg-white/5 border border-amber-300 dark:border-white/10 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-amber-600 animate-pulse" />
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-pastel-yellow">
+                    2 KM Proximity Alert Radar
                   </span>
                 </div>
-
-                {/* ETA Metric */}
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 text-center">
-                  <div className="w-7 h-7 mx-auto rounded-full bg-pastel-yellow/30 text-amber-800 dark:text-pastel-yellow flex items-center justify-center mb-1">
-                    <Clock className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider subtext-muted block">Est. Arrival</span>
-                  <span className="text-base sm:text-xl font-black text-pastel-darkText dark:text-white mt-0.5 block truncate">
-                    {displayEta > 0 ? `~${displayEta} mins` : isLiveState ? 'Arriving' : '---'}
-                  </span>
-                </div>
-
-                {/* Speed Metric */}
-                <div className="p-3.5 sm:p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 text-center">
-                  <div className="w-7 h-7 mx-auto rounded-full bg-pastel-mint text-brand-800 flex items-center justify-center mb-1">
-                    <Gauge className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider subtext-muted block">Live Speed</span>
-                  <span className="text-base sm:text-xl font-black text-pastel-darkText dark:text-white mt-0.5 block truncate">
-                    {resolvedBusLocation?.speed ? `${Math.round(resolvedBusLocation.speed)} km/h` : '0 km/h'}
-                  </span>
-                </div>
+                <p className="text-xs subtext-muted font-medium">
+                  When your bus arrives within 2 km of {boardingPoint?.name || 'your station'}, automated arrival alerts trigger so you can walk to the boarding point on time.
+                </p>
               </div>
 
-              {/* Bottom Row: Departure & Arrival Path Strip */}
-              <div className="p-4 rounded-2xl bg-pastel-cream/40 dark:bg-white/5 border border-amber-200/50 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2 text-xs font-extrabold flex-wrap">
-                  <span className="text-slate-600 dark:text-slate-300">From: <strong className="text-pastel-darkText dark:text-white">{originName}</strong></span>
-                  <ArrowRight className="w-3.5 h-3.5 text-brand-600 dark:text-pastel-yellow shrink-0" />
-                  <span className="text-brand-800 dark:text-pastel-yellow">To: <strong className="text-pastel-darkText dark:text-white">{destinationName}</strong></span>
-                </div>
-
-                {nextStopName && (
-                  <div className="text-xs font-bold text-brand-700 dark:text-pastel-softTeal">
-                    Next Stop: <span className="font-extrabold text-pastel-darkText dark:text-white underline">{nextStopName}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* =========================================================================
-                VIEW TAB CONTENT (OVERVIEW, MAP, TIMELINE)
-                ========================================================================= */}
-            {/* If in TIMELINE tab: Show full Station Progression Timeline */}
-            {activeNavTab === 'TIMELINE' ? (
-              <WhereIsMyBusTracker
-                busNumber={resolvedBusLocation?.busNumber || selectedBus?.busNumber || 'BUS'}
-                route={selectedBus?.route || null}
-                liveLocation={liveLocation || busData?.location || busData?.liveLocation || null}
-                studentBoardingPoint={boardingPoint || null}
-                college={user?.college || null}
-                tripType={tripType}
-                destinationName={destinationName}
-                destinationLat={destinationLat}
-                destinationLng={destinationLng}
-                displayDistance={displayDistance}
-                displayEta={displayEta}
-                onSwitchToMap={() => setActiveNavTab('MAP')}
-              />
-            ) : activeNavTab === 'MAP' ? (
-              /* If in MAP tab: Show full prominent interactive Leaflet map */
-              <div className="water-glass rounded-3xl sm:rounded-4xl p-3 sm:p-5 shadow-glass space-y-3">
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="text-xs font-black uppercase tracking-wider text-pastel-darkText dark:text-white">
-                      Live GPS Vector Map
-                    </span>
-                  </div>
-                  <span className="text-[11px] font-mono text-brand-700 dark:text-pastel-yellow font-bold">
-                    {new Date(liveLocation?.timestamp || Date.now()).toLocaleTimeString()}
-                  </span>
-                </div>
-
-                <div className="h-[460px] sm:h-[550px] rounded-3xl overflow-hidden shadow-inner border border-black/5 dark:border-white/10">
+              {/* Station Map Preview */}
+              <div className="space-y-2">
+                <span className="text-xs font-black uppercase tracking-wider subtext-muted block">
+                  Station Map & 2KM Radar Radius
+                </span>
+                <div className="h-56 sm:h-64 rounded-2xl overflow-hidden shadow-inner border border-black/5 dark:border-white/10">
                   <BusMap
                     busLocation={resolvedBusLocation}
                     boardingPoint={boardingPoint || null}
@@ -1011,86 +1044,15 @@ export const StudentDashboard: React.FC = () => {
                   />
                 </div>
               </div>
-            ) : (
-              /* If in OVERVIEW (Default) tab: Show Map Preview + Station Timeline side-by-side or stacked */
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left/Main Column: Live Map Preview */}
-                <div className="lg:col-span-2 space-y-4">
-                  <div className="water-glass rounded-3xl sm:rounded-4xl p-3 sm:p-5 shadow-glass space-y-3">
-                    <div className="flex items-center justify-between px-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="text-xs font-black uppercase tracking-wider text-pastel-darkText dark:text-white">
-                          Live Map Radar
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => setActiveNavTab('MAP')}
-                        className="text-xs font-extrabold text-brand-700 dark:text-pastel-yellow underline hover:opacity-80"
-                      >
-                        Fullscreen Map ↗
-                      </button>
-                    </div>
-
-                    <div className="h-[340px] sm:h-[400px] rounded-3xl overflow-hidden shadow-inner border border-black/5 dark:border-white/10">
-                      <BusMap
-                        busLocation={resolvedBusLocation}
-                        boardingPoint={boardingPoint || null}
-                        userLiveLocation={userLiveGps}
-                        customDestination={
-                          destinationLat && destinationLng
-                            ? {
-                                name: selectedBus?.route?.destination || 'Destination',
-                                latitude: destinationLat,
-                                longitude: destinationLng,
-                                isTerminus: true,
-                              }
-                            : null
-                        }
-                        college={user?.college || null}
-                        routeStops={selectedBus?.route?.boardingPoints || []}
-                        onRoadRouteCalculated={(data: any) => setRoadNavData(data)}
-                        show2kmCircle={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column: Station Progression Snippet */}
-                <div className="space-y-4">
-                  <WhereIsMyBusTracker
-                    busNumber={resolvedBusLocation?.busNumber || selectedBus?.busNumber || 'BUS'}
-                    route={selectedBus?.route || null}
-                    liveLocation={liveLocation || busData?.location || busData?.liveLocation || null}
-                    studentBoardingPoint={boardingPoint || null}
-                    college={user?.college || null}
-                    tripType={tripType}
-                    destinationName={destinationName}
-                    destinationLat={destinationLat}
-                    destinationLng={destinationLng}
-                    displayDistance={displayDistance}
-                    displayEta={displayEta}
-                    onSwitchToMap={() => setActiveNavTab('MAP')}
-                  />
-                </div>
-              </div>
-            )}
-          </>
+            </div>
+          </div>
         )}
       </main>
 
-      {/* =========================================================================
-          4. FLOATING BOTTOM NAVIGATION (Mobile/Tablet Friendly Dock)
-          ========================================================================= */}
+      {/* Floating Bottom Navigation */}
       <FloatingBottomNav
         activeTab={activeNavTab}
-        onTabChange={(tab) => {
-          if (tab === 'PROFILE') {
-            setShowProfileModal(true);
-          } else {
-            setActiveNavTab(tab);
-          }
-        }}
+        onTabChange={(tab) => setActiveNavTab(tab)}
         isLive={isLiveState}
       />
 
