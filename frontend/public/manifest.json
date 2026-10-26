@@ -1,18 +1,19 @@
 {
-  "short_name": "SRGEC Bus",
-  "name": "SRGEC Live College Bus Tracker",
+  "short_name": "BusTracker",
+  "name": "College Bus Tracker - Live Campus Transit",
   "icons": [
     {
       "src": "/bus-icon.svg",
       "type": "image/svg+xml",
-      "sizes": "192x192 512x512 any"
+      "sizes": "192x192 512x512 any",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
-  "background_color": "#0f172a",
-  "theme_color": "#0284c7",
+  "background_color": "#0F172A",
+  "theme_color": "#2563EB",
   "display": "standalone",
   "orientation": "portrait",
-  "categories": ["education", "navigation", "utilities"],
-  "description": "Real-time Live GPS College Bus Tracking & Road Navigation for SRGEC Students & Faculty"
+  "categories": ["education", "navigation", "transportation"],
+  "description": "Real-time Live GPS College Bus Tracking, Arrival Alerts & Passenger Occupancy"
 }

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
@@ -611,6 +612,431 @@ router.get('/notifications', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching student notifications:', error);
     return res.status(500).json({ error: 'Failed to fetch notifications.' });
+  }
+});
+
+// GET /api/student/preferences - Fetch student notification preferences
+router.get('/preferences', async (req: Request, res: Response) => {
+  try {
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+      include: { preferences: true, user: true },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    let pref = student.preferences;
+    if (!pref) {
+      pref = await prisma.notificationPreference.create({
+        data: {
+          studentId: student.id,
+          busArrivalAlerts: true,
+          thresholdType: 'BOTH',
+          enableWebPush: true,
+          enableSms: false,
+          enableWhatsApp: false,
+          phoneNumber: student.user.phone || null,
+        },
+      });
+    }
+
+    return res.json({ success: true, preferences: pref });
+  } catch (error: any) {
+    console.error('Error fetching preferences:', error);
+    return res.status(500).json({ error: 'Failed to fetch preferences.' });
+  }
+});
+
+// POST /api/student/preferences - Update notification preferences
+router.post('/preferences', async (req: Request, res: Response) => {
+  try {
+    const { busArrivalAlerts, thresholdType, enableWebPush, enableSms, enableWhatsApp, phoneNumber } = req.body;
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    const pref = await prisma.notificationPreference.upsert({
+      where: { studentId: student.id },
+      create: {
+        studentId: student.id,
+        busArrivalAlerts: busArrivalAlerts ?? true,
+        thresholdType: thresholdType || 'BOTH',
+        enableWebPush: enableWebPush ?? true,
+        enableSms: enableSms ?? false,
+        enableWhatsApp: enableWhatsApp ?? false,
+        phoneNumber: phoneNumber || null,
+      },
+      update: {
+        ...(busArrivalAlerts !== undefined ? { busArrivalAlerts } : {}),
+        ...(thresholdType ? { thresholdType } : {}),
+        ...(enableWebPush !== undefined ? { enableWebPush } : {}),
+        ...(enableSms !== undefined ? { enableSms } : {}),
+        ...(enableWhatsApp !== undefined ? { enableWhatsApp } : {}),
+        ...(phoneNumber !== undefined ? { phoneNumber } : {}),
+      },
+    });
+
+    return res.json({ success: true, message: 'Preferences updated successfully.', preferences: pref });
+  } catch (error: any) {
+    console.error('Error saving preferences:', error);
+    return res.status(500).json({ error: 'Failed to save preferences.' });
+  }
+});
+
+// POST /api/student/push-subscribe - Register Web Push subscription
+router.post('/push-subscribe', async (req: Request, res: Response) => {
+  try {
+    const { endpoint, keys, userAgent } = req.body;
+    if (!endpoint || !keys?.p256dh || !keys?.auth) {
+      return res.status(400).json({ error: 'Invalid subscription payload.' });
+    }
+
+    const sub = await prisma.pushSubscriptionRecord.upsert({
+      where: { endpoint },
+      create: {
+        userId: req.user!.userId,
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        userAgent: userAgent || req.headers['user-agent'] || null,
+      },
+      update: {
+        userId: req.user!.userId,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        userAgent: userAgent || req.headers['user-agent'] || null,
+      },
+    });
+
+    return res.json({ success: true, message: 'Push subscription registered.', subscription: sub });
+  } catch (error: any) {
+    console.error('Error registering push subscription:', error);
+    return res.status(500).json({ error: 'Failed to register push subscription.' });
+  }
+});
+
+// POST /api/student/push-unsubscribe - Remove Web Push subscription
+router.post('/push-unsubscribe', async (req: Request, res: Response) => {
+  try {
+    const { endpoint } = req.body;
+    if (endpoint) {
+      await prisma.pushSubscriptionRecord.deleteMany({
+        where: { endpoint },
+      });
+    }
+    return res.json({ success: true, message: 'Push subscription removed.' });
+  } catch (error: any) {
+    console.error('Error removing push subscription:', error);
+    return res.status(500).json({ error: 'Failed to remove push subscription.' });
+  }
+});
+
+// POST /api/student/trips/:tripId/board - Student boarding confirmation ("I'm on board")
+router.post('/trips/:tripId/board', async (req: Request, res: Response) => {
+  try {
+    const { tripId } = req.params;
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      include: { bus: true },
+    });
+    if (!trip) return res.status(404).json({ error: 'Trip not found.' });
+
+    const confirmation = await prisma.boardingConfirmation.upsert({
+      where: {
+        studentId_tripId: {
+          studentId: student.id,
+          tripId,
+        },
+      },
+      create: {
+        studentId: student.id,
+        tripId,
+        status: 'ON_BOARD',
+        confirmedAt: new Date(),
+      },
+      update: {
+        status: 'ON_BOARD',
+        confirmedAt: new Date(),
+      },
+    });
+
+    // Update bus occupancy status
+    const onBoardCount = await prisma.boardingConfirmation.count({
+      where: { tripId, status: 'ON_BOARD' },
+    });
+
+    const newOccupancy = Math.max(trip.bus.currentOccupancy, onBoardCount);
+    const cap = trip.bus.capacity || 40;
+    const ratio = newOccupancy / cap;
+    let status = trip.bus.occupancyStatus;
+    if (ratio >= 0.95) status = 'FULL';
+    else if (ratio >= 0.70) status = 'HIGH';
+    else if (ratio >= 0.35) status = 'MEDIUM';
+    else status = 'LOW';
+
+    const updatedBus = await prisma.bus.update({
+      where: { id: trip.busId },
+      data: {
+        currentOccupancy: newOccupancy,
+        occupancyStatus: status,
+        occupancyUpdatedAt: new Date(),
+        occupancyUpdatedBy: 'STUDENT_BOARDING',
+      },
+    });
+
+    // Broadcast occupancy update via Socket.IO
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`bus_${trip.busId}`).to(`college_${trip.collegeId}`).emit('bus:occupancy:update', {
+        busId: trip.busId,
+        busNumber: trip.bus.busNumber,
+        currentOccupancy: updatedBus.currentOccupancy,
+        occupancyStatus: updatedBus.occupancyStatus,
+        capacity: updatedBus.capacity,
+        updatedAt: updatedBus.occupancyUpdatedAt,
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Boarding confirmed! You are marked on board.',
+      confirmation,
+      busOccupancy: {
+        currentOccupancy: updatedBus.currentOccupancy,
+        occupancyStatus: updatedBus.occupancyStatus,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error confirming boarding:', error);
+    return res.status(500).json({ error: 'Failed to confirm boarding.' });
+  }
+});
+
+// POST /api/student/trips/:tripId/alight - Student alighted from bus
+router.post('/trips/:tripId/alight', async (req: Request, res: Response) => {
+  try {
+    const { tripId } = req.params;
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      include: { bus: true },
+    });
+    if (!trip) return res.status(404).json({ error: 'Trip not found.' });
+
+    const confirmation = await prisma.boardingConfirmation.upsert({
+      where: {
+        studentId_tripId: {
+          studentId: student.id,
+          tripId,
+        },
+      },
+      create: {
+        studentId: student.id,
+        tripId,
+        status: 'ALIGHTED',
+        confirmedAt: new Date(),
+      },
+      update: {
+        status: 'ALIGHTED',
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: 'You have alighted from the bus.',
+      confirmation,
+    });
+  } catch (error: any) {
+    console.error('Error recording alighting:', error);
+    return res.status(500).json({ error: 'Failed to record alighting.' });
+  }
+});
+
+// GET /api/student/boarding-status/:tripId
+router.get('/boarding-status/:tripId', async (req: Request, res: Response) => {
+  try {
+    const { tripId } = req.params;
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    const confirmation = await prisma.boardingConfirmation.findUnique({
+      where: {
+        studentId_tripId: {
+          studentId: student.id,
+          tripId,
+        },
+      },
+    });
+
+    return res.json({
+      success: true,
+      isOnBoard: confirmation?.status === 'ON_BOARD',
+      confirmation,
+    });
+  } catch (error: any) {
+    console.error('Error fetching boarding status:', error);
+    return res.status(500).json({ error: 'Failed to fetch boarding status.' });
+  }
+});
+
+// POST /api/student/guardian-link - Generate secure parent/guardian tracking link
+router.post('/guardian-link', async (req: Request, res: Response) => {
+  try {
+    const { busId, label, expiryHours = 24 } = req.body;
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+      include: { user: true },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    let targetBusId = busId;
+    if (!targetBusId) {
+      const bus = await prisma.bus.findFirst({
+        where: { collegeId: student.collegeId, routeId: student.routeId },
+      });
+      targetBusId = bus?.id;
+    }
+
+    if (!targetBusId) {
+      return res.status(400).json({ error: 'Please select a bus to create a tracking link.' });
+    }
+
+    // High entropy 32 bytes cryptographically secure random token
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    const hours = Math.min(Math.max(Number(expiryHours) || 24, 1), 72);
+    const expiresAt = new Date(Date.now() + hours * 3600 * 1000);
+
+    const record = await prisma.guardianTrackingLink.create({
+      data: {
+        tokenHash,
+        studentId: student.id,
+        busId: targetBusId,
+        label: label || `Tracking for ${student.user.name}`,
+        expiresAt,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: 'Guardian tracking link created successfully.',
+      token: rawToken, // ONLY revealed once at creation
+      relativeUrl: `/track/bus/${targetBusId}?token=${rawToken}`,
+      id: record.id,
+      expiresAt: record.expiresAt,
+      label: record.label,
+    });
+  } catch (error: any) {
+    console.error('Error creating guardian link:', error);
+    return res.status(500).json({ error: 'Failed to create guardian tracking link.' });
+  }
+});
+
+// GET /api/student/guardian-links - List active links
+router.get('/guardian-links', async (req: Request, res: Response) => {
+  try {
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    const links = await prisma.guardianTrackingLink.findMany({
+      where: { studentId: student.id, isRevoked: false },
+      include: {
+        bus: { select: { busNumber: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return res.json({
+      success: true,
+      links: links.map((l) => ({
+        id: l.id,
+        busId: l.busId,
+        busNumber: l.bus.busNumber,
+        label: l.label,
+        expiresAt: l.expiresAt,
+        isExpired: new Date() > new Date(l.expiresAt),
+        createdAt: l.createdAt,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Error fetching guardian links:', error);
+    return res.status(500).json({ error: 'Failed to fetch guardian links.' });
+  }
+});
+
+// DELETE /api/student/guardian-links/:id - Revoke link
+router.delete('/guardian-links/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    await prisma.guardianTrackingLink.updateMany({
+      where: { id, studentId: student.id },
+      data: { isRevoked: true },
+    });
+
+    return res.json({ success: true, message: 'Tracking link revoked successfully.' });
+  } catch (error: any) {
+    console.error('Error revoking guardian link:', error);
+    return res.status(500).json({ error: 'Failed to revoke tracking link.' });
+  }
+});
+
+// PUT /api/student/notifications/:id/read - Mark notification as read
+router.put('/notifications/:id/read', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    await prisma.notification.updateMany({
+      where: { id, studentId: student.id },
+      data: { readAt: new Date() },
+    });
+
+    return res.json({ success: true, message: 'Notification marked as read.' });
+  } catch (error: any) {
+    console.error('Error marking notification read:', error);
+    return res.status(500).json({ error: 'Failed to mark notification read.' });
+  }
+});
+
+// PUT /api/student/notifications/read-all - Mark all notifications as read
+router.put('/notifications/read-all', async (req: Request, res: Response) => {
+  try {
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    await prisma.notification.updateMany({
+      where: { studentId: student.id, readAt: null },
+      data: { readAt: new Date() },
+    });
+
+    return res.json({ success: true, message: 'All notifications marked as read.' });
+  } catch (error: any) {
+    console.error('Error marking all read:', error);
+    return res.status(500).json({ error: 'Failed to mark notifications read.' });
   }
 });
 

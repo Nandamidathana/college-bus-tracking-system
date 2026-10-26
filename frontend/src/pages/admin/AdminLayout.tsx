@@ -18,9 +18,10 @@ import {
   Moon,
   FileSpreadsheet,
   AlertTriangle,
-  X,
   Menu,
+  X,
 } from 'lucide-react';
+import { PwaBanner } from '../../components/common/PwaBanner';
 
 interface DelayAlert {
   id: string;
@@ -95,6 +96,7 @@ export const AdminLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
+      <PwaBanner />
       {/* Floating Late Bus Alert Toast */}
       {delayAlerts.length > 0 && (
         <div className="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-auto animate-fadeIn">

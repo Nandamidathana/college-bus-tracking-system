@@ -23,6 +23,7 @@ import { AdminStudents } from './pages/admin/AdminStudents';
 import { AdminTrips } from './pages/admin/AdminTrips';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { AdminArrivals } from './pages/admin/AdminArrivals';
+import { GuardianTrackingPage } from './pages/public/GuardianTrackingPage';
 
 // Protected Route Guard with strict role authorization
 const ProtectedRoute: React.FC<{
@@ -62,6 +63,7 @@ export const App: React.FC = () => {
           <Routes>
             {/* Public Landing & Gateway */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/track/bus/:busId" element={<GuardianTrackingPage />} />
 
             {/* Student Routes */}
             <Route path="/student/login" element={<StudentLogin />} />

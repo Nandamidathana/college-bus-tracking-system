@@ -26,6 +26,7 @@ model College {
   routes      Route[]
   trips       Trip[]
   busArrivals BusArrival[]
+  incidents   Incident[]
 }
 
 model User {
@@ -39,9 +40,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  college College  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
-  student Student?
-  driver  Driver?
+  college           College                  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  student           Student?
+  driver            Driver?
+  pushSubscriptions PushSubscriptionRecord[]
 }
 
 model Student {
@@ -55,11 +57,14 @@ model Student {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  college       College       @relation(fields: [collegeId], references: [id], onDelete: Cascade)
-  route         Route         @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  boardingPoint BoardingPoint @relation(fields: [boardingPointId], references: [id], onDelete: Cascade)
-  notifications Notification[]
+  user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  college               College                 @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  route                 Route                   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  boardingPoint         BoardingPoint           @relation(fields: [boardingPointId], references: [id], onDelete: Cascade)
+  notifications         Notification[]
+  preferences           NotificationPreference?
+  boardingConfirmations BoardingConfirmation[]
+  guardianLinks         GuardianTrackingLink[]
 
   @@unique([collegeId, rollNumber])
 }
@@ -83,27 +88,34 @@ model Driver {
   trips         Trip[]
   liveLocations LiveLocation[]
   busArrivals   BusArrival[]
+  incidents     Incident[]
 }
 
 model Bus {
-  id               String   @id @default(cuid())
-  busNumber        String
-  capacity         Int      @default(40)
-  collegeId        String
-  routeId          String?
-  assignedDriverId String?
-  status           String   @default("INACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  busNumber          String
+  capacity           Int       @default(40)
+  currentOccupancy   Int       @default(0)
+  occupancyStatus    String    @default("UNKNOWN") // LOW, MEDIUM, HIGH, FULL, UNKNOWN
+  occupancyUpdatedAt DateTime?
+  occupancyUpdatedBy String?
+  collegeId          String
+  routeId            String?
+  assignedDriverId   String?
+  status             String    @default("INACTIVE") // ACTIVE, INACTIVE, MAINTENANCE
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  college           College           @relation(fields: [collegeId], references: [id], onDelete: Cascade)
-  route             Route?            @relation(fields: [routeId], references: [id], onDelete: SetNull)
-  assignedDriver    Driver?           @relation("BusDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
-  driversAssignedTo Driver[]          @relation("DriverAssignedBus")
+  college           College                @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  route             Route?                 @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  assignedDriver    Driver?                @relation("BusDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  driversAssignedTo Driver[]               @relation("DriverAssignedBus")
   trips             Trip[]
   liveLocation      LiveLocation?
   locationHistories LocationHistory[]
   busArrivals       BusArrival[]
+  guardianLinks     GuardianTrackingLink[]
+  incidents         Incident[]
 
   @@unique([collegeId, busNumber])
 }
@@ -160,13 +172,14 @@ model Trip {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  bus               Bus               @relation(fields: [busId], references: [id], onDelete: Cascade)
-  driver            Driver            @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  college           College           @relation(fields: [collegeId], references: [id], onDelete: Cascade)
-  liveLocations     LiveLocation[]
-  locationHistories LocationHistory[]
-  notifications     Notification[]
-  busArrival        BusArrival?
+  bus                   Bus                    @relation(fields: [busId], references: [id], onDelete: Cascade)
+  driver                Driver                 @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  college               College                @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  liveLocations         LiveLocation[]
+  locationHistories     LocationHistory[]
+  notifications         Notification[]
+  busArrival            BusArrival?
+  boardingConfirmations BoardingConfirmation[]
 }
 
 model LiveLocation {
@@ -202,18 +215,101 @@ model LocationHistory {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   studentId String
   tripId    String
-  type      String   @default("APPROACHING_2KM") // APPROACHING_2KM, TRIP_STARTED, TRIP_ENDED
+  type      String    @default("APPROACHING_2KM") // APPROACHING_2KM, APPROACHING_2STOPS, TRIP_STARTED, TRIP_ENDED, SERVICE_DISRUPTION
+  channel   String    @default("IN_APP") // IN_APP, WEB_PUSH, SMS, WHATSAPP
   message   String
-  sentAt    DateTime @default(now())
-  status    String   @default("SENT")
+  busId     String?
+  busNumber String?
+  readAt    DateTime?
+  sentAt    DateTime  @default(now())
+  status    String    @default("SENT")
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   trip    Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, tripId, type])
+}
+
+model NotificationPreference {
+  id                String   @id @default(cuid())
+  studentId         String   @unique
+  busArrivalAlerts  Boolean  @default(true)
+  thresholdType     String   @default("DISTANCE_2KM") // DISTANCE_2KM, STOPS_2, BOTH
+  enableWebPush     Boolean  @default(true)
+  enableSms         Boolean  @default(false)
+  enableWhatsApp    Boolean  @default(false)
+  phoneNumber       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model PushSubscriptionRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BoardingConfirmation {
+  id          String   @id @default(cuid())
+  studentId   String
+  tripId      String
+  status      String   @default("ON_BOARD") // ON_BOARD, ALIGHTED
+  confirmedAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  trip    Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, tripId])
+}
+
+model GuardianTrackingLink {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  studentId String
+  busId     String
+  tripId    String?
+  label     String?
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  bus     Bus     @relation(fields: [busId], references: [id], onDelete: Cascade)
+}
+
+model Incident {
+  id              String    @id @default(cuid())
+  collegeId       String
+  busId           String
+  driverId        String
+  tripId          String?
+  type            String    // SOS, BREAKDOWN, DELAY, ASSISTANCE
+  severity        String    @default("MEDIUM") // CRITICAL, HIGH, MEDIUM, LOW
+  status          String    @default("OPEN") // OPEN, ACKNOWLEDGED, DISPATCHED, RESOLVED, CANCELLED
+  description     String?
+  delayMinutes    Int       @default(0)
+  latitude        Float?
+  longitude       Float?
+  accuracy        Float?
+  reportedAt      DateTime  @default(now())
+  acknowledgedAt  DateTime?
+  resolvedAt      DateTime?
+  resolutionNotes String?
+
+  college College @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  bus     Bus     @relation(fields: [busId], references: [id], onDelete: Cascade)
+  driver  Driver  @relation(fields: [driverId], references: [id], onDelete: Cascade)
 }
 
 model BusArrival {

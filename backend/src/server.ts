@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes';
 import studentRoutes from './routes/student.routes';
 import driverRoutes from './routes/driver.routes';
 import adminRoutes from './routes/admin.routes';
+import publicRoutes from './routes/public.routes';
 
 const app = express();
 const server = http.createServer(app);
@@ -54,11 +55,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/public', publicRoutes);
 
 app.use('/auth', authRoutes);
 app.use('/student', studentRoutes);
 app.use('/driver', driverRoutes);
 app.use('/admin', adminRoutes);
+app.use('/public', publicRoutes);
 
 // Setup Socket.IO Event Handlers
 setupWebSocket(io);

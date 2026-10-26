@@ -819,5 +819,90 @@ router.post('/arrivals/simulate', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/admin/incidents - List incidents for college with filters
+router.get('/incidents', async (req: Request, res: Response) => {
+  try {
+    const collegeId = req.user!.collegeId;
+    const { status, type, severity } = req.query;
+
+    const incidents = await prisma.incident.findMany({
+      where: {
+        collegeId,
+        ...(status ? { status: String(status) } : {}),
+        ...(type ? { type: String(type) } : {}),
+        ...(severity ? { severity: String(severity) } : {}),
+      },
+      include: {
+        bus: { select: { id: true, busNumber: true, route: { select: { name: true } } } },
+        driver: { select: { id: true, driverName: true, phone: true } },
+      },
+      orderBy: { reportedAt: 'desc' },
+      take: 50,
+    });
+
+    return res.json({ success: true, incidents });
+  } catch (error: any) {
+    console.error('Error fetching admin incidents:', error);
+    return res.status(500).json({ error: 'Failed to fetch incidents.' });
+  }
+});
+
+// PUT /api/admin/incidents/:id/status - Update incident status and resolution
+router.put('/incidents/:id/status', async (req: Request, res: Response) => {
+  try {
+    const collegeId = req.user!.collegeId;
+    const { id } = req.params;
+    const { status, resolutionNotes } = req.body;
+
+    const existing = await prisma.incident.findFirst({
+      where: { id, collegeId },
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'Incident not found.' });
+    }
+
+    const isResolving = status === 'RESOLVED' || status === 'CANCELLED';
+    const isAcknowledging = status === 'ACKNOWLEDGED' && !existing.acknowledgedAt;
+
+    const updated = await prisma.incident.update({
+      where: { id },
+      data: {
+        status: status || existing.status,
+        resolutionNotes: resolutionNotes !== undefined ? resolutionNotes : existing.resolutionNotes,
+        ...(isAcknowledging ? { acknowledgedAt: new Date() } : {}),
+        ...(isResolving ? { resolvedAt: new Date() } : {}),
+      },
+      include: {
+        bus: { select: { id: true, busNumber: true } },
+        driver: { select: { id: true, driverName: true, phone: true } },
+      },
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      const payload = {
+        id: updated.id,
+        status: updated.status,
+        resolutionNotes: updated.resolutionNotes,
+        acknowledgedAt: updated.acknowledgedAt,
+        resolvedAt: updated.resolvedAt,
+        busId: updated.busId,
+        busNumber: updated.bus.busNumber,
+      };
+      io.to(`college_${collegeId}`).emit('admin:incident:updated', payload);
+      io.to(`bus_${updated.busId}`).emit('bus:incident:updated', payload);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Incident status updated successfully.',
+      incident: updated,
+    });
+  } catch (error: any) {
+    console.error('Error updating incident status:', error);
+    return res.status(500).json({ error: error.message || 'Failed to update incident.' });
+  }
+});
+
 export default router;
 

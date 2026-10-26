@@ -21,7 +21,16 @@ import {
   Crosshair,
   Satellite,
   X,
+  Users,
+  Minus,
+  Plus,
+  AlertOctagon,
+  Wrench,
+  Send,
+  PhoneCall,
+  ShieldAlert,
 } from 'lucide-react';
+import { PwaBanner } from '../../components/common/PwaBanner';
 
 export const DriverDashboard: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -59,6 +68,20 @@ export const DriverDashboard: React.FC = () => {
 
   const [isChangeBusOpen, setIsChangeBusOpen] = useState<boolean>(false);
   const [newBusIdToAssign, setNewBusIdToAssign] = useState<string>('');
+
+  // Live Occupancy Management
+  const [occupancyStatus, setOccupancyStatus] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'FULL' | 'UNKNOWN'>('LOW');
+  const [occupancyCount, setOccupancyCount] = useState<number>(0);
+  const [updatingOccupancy, setUpdatingOccupancy] = useState<boolean>(false);
+  const [occupancySuccessMsg, setOccupancySuccessMsg] = useState<string>('');
+
+  // Incident & SOS Reporting
+  const [showIncidentModal, setShowIncidentModal] = useState<boolean>(false);
+  const [incidentType, setIncidentType] = useState<'SOS' | 'BREAKDOWN' | 'DELAY' | 'ASSISTANCE'>('DELAY');
+  const [incidentDelay, setIncidentDelay] = useState<number>(15);
+  const [incidentDesc, setIncidentDesc] = useState<string>('');
+  const [submittingIncident, setSubmittingIncident] = useState<boolean>(false);
+  const [incidentSuccessMsg, setIncidentSuccessMsg] = useState<string>('');
 
   const watchIdRef = useRef<number | null>(null);
   const wakeLockRef = useRef<any>(null);
@@ -345,8 +368,72 @@ export const DriverDashboard: React.FC = () => {
     }
   };
 
+  // Sync initial occupancy when selected bus changes
+  useEffect(() => {
+    if (selectedBus) {
+      setOccupancyStatus(((selectedBus as any).occupancyStatus as any) || 'LOW');
+      setOccupancyCount((selectedBus as any).currentOccupancy || 0);
+    }
+  }, [selectedBus]);
+
+  const handleUpdateOccupancy = async (newStatus?: string, newCount?: number) => {
+    if (!selectedBusId) return;
+    try {
+      setUpdatingOccupancy(true);
+      setOccupancySuccessMsg('');
+      const statusToUse = newStatus || occupancyStatus;
+      const countToUse = newCount !== undefined ? newCount : occupancyCount;
+
+      const res = await driverApi.updateOccupancy(selectedBusId, {
+        occupancyStatus: statusToUse,
+        currentOccupancy: countToUse,
+      });
+
+      if (res.data.success) {
+        setOccupancyStatus(res.data.bus.occupancyStatus);
+        setOccupancyCount(res.data.bus.currentOccupancy);
+        setOccupancySuccessMsg('Occupancy updated & broadcasted live!');
+        setTimeout(() => setOccupancySuccessMsg(''), 3000);
+      }
+    } catch (err: any) {
+      setErrorMessage('Failed to update occupancy.');
+    } finally {
+      setUpdatingOccupancy(false);
+    }
+  };
+
+  const handleReportIncident = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBusId) return;
+    try {
+      setSubmittingIncident(true);
+      setIncidentSuccessMsg('');
+      const res = await driverApi.reportIncident({
+        type: incidentType,
+        severity: incidentType === 'SOS' ? 'CRITICAL' : incidentType === 'BREAKDOWN' ? 'HIGH' : 'MEDIUM',
+        delayMinutes: incidentType === 'DELAY' || incidentType === 'BREAKDOWN' ? Number(incidentDelay) : 0,
+        description: incidentDesc.trim() || undefined,
+        latitude: telemetry.latitude || undefined,
+        longitude: telemetry.longitude || undefined,
+        accuracy: telemetry.accuracy || undefined,
+      });
+
+      if (res.data.success) {
+        setIncidentSuccessMsg(`Reported ${incidentType} alert to Admin & route students.`);
+        setShowIncidentModal(false);
+        setIncidentDesc('');
+        setTimeout(() => setIncidentSuccessMsg(''), 6000);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.error || 'Failed to submit incident report.');
+    } finally {
+      setSubmittingIncident(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors pb-12">
+      <PwaBanner />
       <Navbar />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
@@ -367,6 +454,165 @@ export const DriverDashboard: React.FC = () => {
             <span className="font-medium">{locationSuccessMsg}</span>
           </div>
         )}
+
+        {/* Incident Reporting Toast */}
+        {incidentSuccessMsg && (
+          <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100 text-xs sm:text-sm flex items-center justify-between shadow-xs animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="w-5 h-5 shrink-0 text-blue-600 dark:text-blue-400" />
+              <span className="font-semibold">{incidentSuccessMsg}</span>
+            </div>
+            <button onClick={() => setIncidentSuccessMsg('')} className="p-1 text-blue-500 hover:text-blue-700">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Safety & Incident Actions Quick Bar */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-red-600" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                Driver Incident & Emergency Controls
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-400">Immediate Admin Alert</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setIncidentType('SOS');
+                setShowIncidentModal(true);
+              }}
+              className="p-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex flex-col items-center justify-center gap-1.5"
+            >
+              <AlertOctagon className="w-5 h-5 animate-pulse" />
+              <span>SOS EMERGENCY</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIncidentType('BREAKDOWN');
+                setShowIncidentModal(true);
+              }}
+              className="p-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex flex-col items-center justify-center gap-1.5"
+            >
+              <Wrench className="w-5 h-5" />
+              <span>BREAKDOWN</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIncidentType('DELAY');
+                setShowIncidentModal(true);
+              }}
+              className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex flex-col items-center justify-center gap-1.5"
+            >
+              <Clock className="w-5 h-5" />
+              <span>REPORT DELAY</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIncidentType('ASSISTANCE');
+                setShowIncidentModal(true);
+              }}
+              className="p-3 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex flex-col items-center justify-center gap-1.5"
+            >
+              <PhoneCall className="w-5 h-5" />
+              <span>REQUEST HELP</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Occupancy Management Console */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                Live Bus Occupancy & Passenger Count
+              </span>
+            </div>
+            {occupancySuccessMsg && (
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 animate-fadeIn">
+                ✓ {occupancySuccessMsg}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700">
+            {/* Passenger Count Stepper */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Passengers:</span>
+              <div className="flex items-center border border-slate-300 dark:border-slate-600 rounded-xl overflow-hidden bg-white dark:bg-slate-800 shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = Math.max(0, occupancyCount - 1);
+                    setOccupancyCount(next);
+                    handleUpdateOccupancy(undefined, next);
+                  }}
+                  className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <input
+                  type="number"
+                  value={occupancyCount}
+                  onChange={(e) => {
+                    const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                    setOccupancyCount(val);
+                  }}
+                  className="w-14 text-center font-bold text-sm bg-transparent border-x border-slate-200 dark:border-slate-700 focus:outline-hidden py-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = occupancyCount + 1;
+                    setOccupancyCount(next);
+                    handleUpdateOccupancy(undefined, next);
+                  }}
+                  className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <span className="text-xs text-slate-400 font-mono">/ {selectedBus?.capacity || 40} capacity</span>
+            </div>
+
+            {/* Quick Preset Badges */}
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { id: 'LOW', label: 'Low', color: 'bg-emerald-600 hover:bg-emerald-700 text-white' },
+                { id: 'MEDIUM', label: 'Medium', color: 'bg-sky-600 hover:bg-sky-700 text-white' },
+                { id: 'HIGH', label: 'High', color: 'bg-amber-600 hover:bg-amber-700 text-white' },
+                { id: 'FULL', label: 'Full', color: 'bg-red-600 hover:bg-red-700 text-white' },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={updatingOccupancy}
+                  onClick={() => {
+                    setOccupancyStatus(p.id as any);
+                    handleUpdateOccupancy(p.id);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs ${
+                    occupancyStatus === p.id ? `${p.color} ring-2 ring-offset-2 ring-blue-500` : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Driver Control Card */}
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 sm:p-7 border border-slate-200 dark:border-slate-700 shadow-xs space-y-6">
@@ -618,6 +864,107 @@ export const DriverDashboard: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Driver Incident & SOS Reporting Modal */}
+      {showIncidentModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-red-600" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Report {incidentType} Alert
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowIncidentModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleReportIncident} className="space-y-4">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {incidentType === 'SOS'
+                  ? 'High-priority emergency SOS. Alert will be instantly dispatched to campus security and transport admin.'
+                  : incidentType === 'BREAKDOWN'
+                  ? 'Log vehicle mechanical failure. Transport admin and waiting route students will receive a breakdown notice.'
+                  : incidentType === 'DELAY'
+                  ? 'Notify students along the route of traffic or journey delay.'
+                  : 'Send assistance request to college transit control.'}
+              </p>
+
+              {(incidentType === 'DELAY' || incidentType === 'BREAKDOWN') && (
+                <div>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Estimated Delay Minutes
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[10, 15, 20, 30].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => setIncidentDelay(mins)}
+                        className={`py-2 rounded-lg text-xs font-bold border transition-colors ${
+                          incidentDelay === mins
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        +{mins} mins
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  Incident Notes / Details (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder={
+                    incidentType === 'SOS'
+                      ? 'Describe medical/safety emergency...'
+                      : incidentType === 'BREAKDOWN'
+                      ? 'e.g. Flat tire at highway junction, engine overheating...'
+                      : 'e.g. Railway crossing gate closed, heavy rain traffic...'
+                  }
+                  value={incidentDesc}
+                  onChange={(e) => setIncidentDesc(e.target.value)}
+                  className="w-full text-xs p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-hidden focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowIncidentModal(false)}
+                  className="w-1/2 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingIncident}
+                  className={`w-1/2 py-2.5 rounded-xl text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50 ${
+                    incidentType === 'SOS'
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : incidentType === 'BREAKDOWN'
+                      ? 'bg-amber-600 hover:bg-amber-700'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  {submittingIncident ? 'Broadcasting...' : `Confirm & Broadcast`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

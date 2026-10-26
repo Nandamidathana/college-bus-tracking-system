@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { authenticate, requireRole } from '../middleware/auth';
+import { dispatchMultiChannelNotification } from '../services/notification.service';
 
 const router = Router();
 
@@ -641,6 +642,236 @@ router.put('/change-bus', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error changing bus:', error);
     return res.status(500).json({ error: error.message || 'Failed to change bus.' });
+  }
+});
+
+// PUT /api/driver/buses/:busId/occupancy - Update bus occupancy status
+router.put('/buses/:busId/occupancy', async (req: Request, res: Response) => {
+  try {
+    const { busId } = req.params;
+    const { currentOccupancy, occupancyStatus } = req.body;
+
+    const driver = await prisma.driver.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!driver) return res.status(404).json({ error: 'Driver profile not found.' });
+
+    const bus = await prisma.bus.findUnique({
+      where: { id: busId },
+    });
+    if (!bus || bus.collegeId !== driver.collegeId) {
+      return res.status(404).json({ error: 'Bus not found.' });
+    }
+
+    let finalCount = currentOccupancy !== undefined ? Number(currentOccupancy) : bus.currentOccupancy;
+    let finalStatus = occupancyStatus || bus.occupancyStatus;
+    const cap = bus.capacity || 40;
+
+    if (occupancyStatus && currentOccupancy === undefined) {
+      switch (occupancyStatus) {
+        case 'LOW':
+          finalCount = Math.round(cap * 0.25);
+          break;
+        case 'MEDIUM':
+          finalCount = Math.round(cap * 0.50);
+          break;
+        case 'HIGH':
+          finalCount = Math.round(cap * 0.85);
+          break;
+        case 'FULL':
+          finalCount = cap;
+          break;
+        default:
+          break;
+      }
+    } else if (currentOccupancy !== undefined && !occupancyStatus) {
+      const ratio = finalCount / cap;
+      if (ratio >= 0.95) finalStatus = 'FULL';
+      else if (ratio >= 0.70) finalStatus = 'HIGH';
+      else if (ratio >= 0.35) finalStatus = 'MEDIUM';
+      else finalStatus = 'LOW';
+    }
+
+    const updatedBus = await prisma.bus.update({
+      where: { id: busId },
+      data: {
+        currentOccupancy: Math.max(0, finalCount),
+        occupancyStatus: finalStatus,
+        occupancyUpdatedAt: new Date(),
+        occupancyUpdatedBy: driver.driverName,
+      },
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`bus_${busId}`).to(`college_${driver.collegeId}`).emit('bus:occupancy:update', {
+        busId: updatedBus.id,
+        busNumber: updatedBus.busNumber,
+        currentOccupancy: updatedBus.currentOccupancy,
+        occupancyStatus: updatedBus.occupancyStatus,
+        capacity: updatedBus.capacity,
+        updatedAt: updatedBus.occupancyUpdatedAt,
+        updatedBy: driver.driverName,
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Bus occupancy updated successfully.',
+      bus: {
+        id: updatedBus.id,
+        busNumber: updatedBus.busNumber,
+        currentOccupancy: updatedBus.currentOccupancy,
+        occupancyStatus: updatedBus.occupancyStatus,
+        capacity: updatedBus.capacity,
+        occupancyUpdatedAt: updatedBus.occupancyUpdatedAt,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error updating occupancy:', error);
+    return res.status(500).json({ error: 'Failed to update bus occupancy.' });
+  }
+});
+
+// POST /api/driver/incidents - Report SOS, Breakdown, Delay, Assistance
+router.post('/incidents', async (req: Request, res: Response) => {
+  try {
+    const { type, severity = 'MEDIUM', description, delayMinutes = 0, latitude, longitude, accuracy } = req.body;
+
+    const driver = await prisma.driver.findFirst({
+      where: { userId: req.user!.userId },
+      include: {
+        assignedBus: true,
+        trips: {
+          where: { status: 'ACTIVE' },
+          include: { bus: true },
+          take: 1,
+        },
+      },
+    });
+    if (!driver) return res.status(404).json({ error: 'Driver profile not found.' });
+
+    const activeTrip = driver.trips[0] || null;
+    const bus = activeTrip?.bus || driver.assignedBus;
+    if (!bus) {
+      return res.status(400).json({ error: 'No bus assigned or active trip found for reporting.' });
+    }
+
+    const incident = await prisma.incident.create({
+      data: {
+        collegeId: driver.collegeId,
+        busId: bus.id,
+        driverId: driver.id,
+        tripId: activeTrip?.id || null,
+        type: type || 'DELAY',
+        severity: severity || 'MEDIUM',
+        status: 'OPEN',
+        description: description || null,
+        delayMinutes: Number(delayMinutes) || 0,
+        latitude: latitude ? parseFloat(String(latitude)) : null,
+        longitude: longitude ? parseFloat(String(longitude)) : null,
+        accuracy: accuracy ? parseFloat(String(accuracy)) : null,
+      },
+    });
+
+    const io = req.app.get('io');
+    const incidentPayload = {
+      id: incident.id,
+      collegeId: driver.collegeId,
+      busId: bus.id,
+      busNumber: bus.busNumber,
+      driverName: driver.driverName,
+      driverPhone: driver.phone,
+      type: incident.type,
+      severity: incident.severity,
+      status: incident.status,
+      description: incident.description,
+      delayMinutes: incident.delayMinutes,
+      latitude: incident.latitude,
+      longitude: incident.longitude,
+      reportedAt: incident.reportedAt.toISOString(),
+    };
+
+    if (io) {
+      // 1. Emit to admin college room
+      io.to(`college_${driver.collegeId}`).emit('admin:incident:new', incidentPayload);
+
+      // If critical or SOS, emit high-priority emergency event
+      if (incident.type === 'SOS' || incident.severity === 'CRITICAL') {
+        io.to(`college_${driver.collegeId}`).emit('admin:incident:emergency', incidentPayload);
+      }
+
+      // 2. Emit to bus room for students currently tracking
+      io.to(`bus_${bus.id}`).emit('bus:incident:alert', incidentPayload);
+    }
+
+    // 3. Dispatch multi-channel notification to all students assigned to this route or bus
+    try {
+      const affectedStudents = await prisma.student.findMany({
+        where: {
+          collegeId: driver.collegeId,
+          ...(bus.routeId ? { routeId: bus.routeId } : {}),
+        },
+        select: { id: true },
+      });
+
+      const title =
+        incident.type === 'SOS'
+          ? `🚨 SOS Alert: Bus ${bus.busNumber}`
+          : incident.type === 'BREAKDOWN'
+          ? `⚠️ Bus ${bus.busNumber} Breakdown`
+          : `⏱️ Bus ${bus.busNumber} Delayed (+${incident.delayMinutes}m)`;
+
+      const msg = incident.description
+        ? `${title}: ${incident.description}`
+        : incident.delayMinutes > 0
+        ? `${title}. Expected delay is approx ${incident.delayMinutes} minutes.`
+        : `${title}. Support team has been alerted.`;
+
+      for (const st of affectedStudents) {
+        await dispatchMultiChannelNotification(io, {
+          studentId: st.id,
+          tripId: activeTrip?.id || incident.id,
+          type: 'SERVICE_DISRUPTION',
+          title,
+          message: msg,
+          busId: bus.id,
+          busNumber: bus.busNumber,
+        });
+      }
+    } catch (notifErr) {
+      console.error('Error dispatching incident student notifications:', notifErr);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Incident reported successfully. Admin and affected students have been alerted.',
+      incident,
+    });
+  } catch (error: any) {
+    console.error('Error reporting incident:', error);
+    return res.status(500).json({ error: error.message || 'Failed to report incident.' });
+  }
+});
+
+// GET /api/driver/incidents - List incidents reported by driver
+router.get('/incidents', async (req: Request, res: Response) => {
+  try {
+    const driver = await prisma.driver.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!driver) return res.status(404).json({ error: 'Driver not found.' });
+
+    const incidents = await prisma.incident.findMany({
+      where: { driverId: driver.id },
+      orderBy: { reportedAt: 'desc' },
+      take: 20,
+    });
+
+    return res.json({ success: true, incidents });
+  } catch (error: any) {
+    console.error('Error fetching driver incidents:', error);
+    return res.status(500).json({ error: 'Failed to fetch incidents.' });
   }
 });
 

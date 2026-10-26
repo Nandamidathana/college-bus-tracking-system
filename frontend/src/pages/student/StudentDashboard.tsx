@@ -9,6 +9,9 @@ import { Navbar } from '../../components/common/Navbar';
 import { StudentProfileModal } from '../../components/student/StudentProfileModal';
 import { WhereIsMyBusTracker } from '../../components/student/WhereIsMyBusTracker';
 import { FloatingBottomNav, StudentNavTab } from '../../components/common/FloatingBottomNav';
+import { NotificationSettingsModal } from '../../components/student/NotificationSettingsModal';
+import { GuardianLinkModal } from '../../components/student/GuardianLinkModal';
+import { PwaBanner } from '../../components/common/PwaBanner';
 import { checkBusServesBoardingStop } from '../../utils/routeMatching';
 import {
   Compass,
@@ -82,6 +85,18 @@ export const StudentDashboard: React.FC = () => {
   const [volunteerUpdateCount, setVolunteerUpdateCount] = useState<number>(0);
   const [showVolunteerModal, setShowVolunteerModal] = useState<boolean>(false);
   const volunteerWatchIdRef = useRef<number | null>(null);
+
+  // New Feature States: Notification modal, Guardian link modal, Boarding toggle, Incident alerts, Bus Occupancy
+  const [showNotifModal, setShowNotifModal] = useState<boolean>(false);
+  const [showGuardianModal, setShowGuardianModal] = useState<boolean>(false);
+  const [isOnBoard, setIsOnBoard] = useState<boolean>(false);
+  const [activeIncident, setActiveIncident] = useState<any | null>(null);
+  const [busOccupancy, setBusOccupancy] = useState<{
+    currentOccupancy: number;
+    occupancyStatus: string;
+    capacity: number;
+    updatedAt?: string;
+  } | null>(null);
 
   const student = user?.student;
   const boardingPoint = student?.boardingPoint;
@@ -338,6 +353,39 @@ export const StudentDashboard: React.FC = () => {
       setVolunteerUpdateCount((c) => c + 1);
     };
 
+    const handleOccupancyUpdate = (data: any) => {
+      if (data && (!selectedBusId || data.busId === selectedBusId)) {
+        setBusOccupancy({
+          currentOccupancy: data.currentOccupancy,
+          occupancyStatus: data.occupancyStatus,
+          capacity: data.capacity || 40,
+          updatedAt: data.updatedAt,
+        });
+      }
+    };
+
+    const handleIncidentAlert = (data: any) => {
+      if (data && (!selectedBusId || data.busId === selectedBusId)) {
+        setActiveIncident(data);
+      }
+    };
+
+    const handleNewNotification = (data: any) => {
+      if (data) {
+        setActiveAlert({
+          type: data.type || 'APPROACHING_2KM',
+          tripId: data.tripId || '',
+          busId: data.busId || '',
+          busNumber: data.busNumber || '',
+          boardingPointName: student?.boardingPoint?.name || '',
+          distanceMeters: 2000,
+          formattedDistance: data.distanceKm || '2.0 km',
+          message: data.message,
+          timestamp: data.sentAt || new Date().toISOString(),
+        });
+      }
+    };
+
     socket.on('bus:location:update', handleLocationUpdate);
     socket.on('bus:trip:started', handleTripStarted);
     socket.on('bus:trip:ended', handleTripEnded);
@@ -347,6 +395,9 @@ export const StudentDashboard: React.FC = () => {
     socket.on('bus:return_completed', handleReturnCompleted);
     socket.on('volunteer:status', handleVolunteerStatus);
     socket.on('volunteer:location:ack', handleVolunteerAck);
+    socket.on('bus:occupancy:update', handleOccupancyUpdate);
+    socket.on('bus:incident:alert', handleIncidentAlert);
+    socket.on('notification:new', handleNewNotification);
 
     return () => {
       socket.emit('bus:unsubscribe', { busId: selectedBusId });
@@ -359,8 +410,55 @@ export const StudentDashboard: React.FC = () => {
       socket.off('bus:return_completed', handleReturnCompleted);
       socket.off('volunteer:status', handleVolunteerStatus);
       socket.off('volunteer:location:ack', handleVolunteerAck);
+      socket.off('bus:occupancy:update', handleOccupancyUpdate);
+      socket.off('bus:incident:alert', handleIncidentAlert);
+      socket.off('notification:new', handleNewNotification);
     };
-  }, [selectedBusId]);
+  }, [selectedBusId, student?.boardingPoint?.name]);
+
+  // Sync initial occupancy from selected bus
+  useEffect(() => {
+    if (selectedBus) {
+      setBusOccupancy({
+        currentOccupancy: (selectedBus as any).currentOccupancy ?? 0,
+        occupancyStatus: (selectedBus as any).occupancyStatus || 'UNKNOWN',
+        capacity: selectedBus.capacity || 40,
+        updatedAt: (selectedBus as any).occupancyUpdatedAt,
+      });
+    }
+  }, [selectedBus]);
+
+  // Sync boarding status
+  const currentActiveTripId = busData?.activeTrip?.id || selectedBus?.activeTrip?.id;
+  useEffect(() => {
+    if (currentActiveTripId) {
+      studentApi
+        .getBoardingStatus(currentActiveTripId)
+        .then((res) => {
+          if (res.data?.success) {
+            setIsOnBoard(!!res.data.isOnBoard);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setIsOnBoard(false);
+    }
+  }, [currentActiveTripId]);
+
+  const handleToggleBoarding = async () => {
+    if (!currentActiveTripId) return;
+    try {
+      if (isOnBoard) {
+        await studentApi.alightBoarding(currentActiveTripId);
+        setIsOnBoard(false);
+      } else {
+        await studentApi.confirmBoarding(currentActiveTripId);
+        setIsOnBoard(true);
+      }
+    } catch (err: any) {
+      console.error('Error toggling boarding:', err);
+    }
+  };
 
   // Volunteer continuous GPS watcher
   useEffect(() => {
@@ -513,6 +611,7 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col relative bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
+      <PwaBanner />
       <Navbar />
 
       {/* Arrival Toast */}
@@ -601,6 +700,15 @@ export const StudentDashboard: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  onClick={() => setShowNotifModal(true)}
+                  className="p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors shadow-xs"
+                  title="Notification Alerts & Settings"
+                  aria-label="Notification Alerts and Settings"
+                >
+                  <Bell className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => setShowVolunteerModal(true)}
                   className={`p-2 rounded-lg border transition-colors ${
                     isVolunteerMode
@@ -623,6 +731,37 @@ export const StudentDashboard: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {/* Service Disruption / Incident Alert Banner */}
+            {activeIncident && (
+              <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 text-red-950 dark:text-red-100 flex items-center justify-between shadow-xs animate-fadeIn">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-5 h-5 animate-bounce" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-red-800 dark:text-red-300 block">
+                      Bus Alert: {activeIncident.type}
+                    </span>
+                    <p className="text-xs sm:text-sm font-semibold">
+                      {activeIncident.description || `Bus #${activeIncident.busNumber} reported ${activeIncident.type}.`}
+                    </p>
+                    {activeIncident.delayMinutes > 0 && (
+                      <span className="text-[11px] text-red-700 dark:text-red-300 font-medium">
+                        Expected Delay: +{activeIncident.delayMinutes} minutes
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveIncident(null)}
+                  className="p-1.5 rounded-lg text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40"
+                  aria-label="Dismiss incident alert"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
             {/* 2. Greeting */}
             <div className="space-y-0.5 pt-0.5">
@@ -723,6 +862,79 @@ export const StudentDashboard: React.FC = () => {
                   )}
                 </div>
               )}
+
+              {/* Live Bus Occupancy & Passenger Count */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-700/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-slate-500" /> Occupancy:
+                  </span>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+                      busOccupancy?.occupancyStatus === 'LOW'
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                        : busOccupancy?.occupancyStatus === 'MEDIUM'
+                        ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200 dark:border-sky-800'
+                        : busOccupancy?.occupancyStatus === 'HIGH'
+                        ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                        : busOccupancy?.occupancyStatus === 'FULL'
+                        ? 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        busOccupancy?.occupancyStatus === 'LOW' || busOccupancy?.occupancyStatus === 'MEDIUM'
+                          ? 'bg-emerald-500'
+                          : busOccupancy?.occupancyStatus === 'HIGH'
+                          ? 'bg-amber-500'
+                          : busOccupancy?.occupancyStatus === 'FULL'
+                          ? 'bg-red-500'
+                          : 'bg-slate-400'
+                      }`}
+                    />
+                    {busOccupancy?.occupancyStatus === 'LOW'
+                      ? 'Seats Available'
+                      : busOccupancy?.occupancyStatus === 'MEDIUM'
+                      ? 'Moderate Seats'
+                      : busOccupancy?.occupancyStatus === 'HIGH'
+                      ? 'Standing Only'
+                      : busOccupancy?.occupancyStatus === 'FULL'
+                      ? 'Bus Full'
+                      : 'Unknown'}
+                  </span>
+                  <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    ({busOccupancy?.currentOccupancy || 0}/{busOccupancy?.capacity || 40})
+                  </span>
+                </div>
+
+                {/* Boarding Confirmation Action Toggle */}
+                {currentActiveTripId && (
+                  <button
+                    type="button"
+                    onClick={handleToggleBoarding}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs shrink-0 ${
+                      isOnBoard
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
+                    }`}
+                  >
+                    <UserCheck className="w-3.5 h-3.5" />
+                    {isOnBoard ? "I'm on Board ✓" : "I'm on Board"}
+                  </button>
+                )}
+              </div>
+
+              {/* Share Guardian Tracking Link Action */}
+              <div className="pt-2 flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowGuardianModal(true)}
+                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5"
+                >
+                  <Shield className="w-3.5 h-3.5 text-blue-500" /> Share Live Tracking with Parent/Guardian
+                </button>
+              </div>
             </div>
 
             {/* 4. Boarding Stop Card */}
@@ -1114,6 +1326,20 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Notification Settings Modal */}
+      <NotificationSettingsModal
+        isOpen={showNotifModal}
+        onClose={() => setShowNotifModal(false)}
+      />
+
+      {/* Parent/Guardian Tracking Link Modal */}
+      <GuardianLinkModal
+        isOpen={showGuardianModal}
+        onClose={() => setShowGuardianModal(false)}
+        busId={selectedBusId}
+        busNumber={selectedBus?.busNumber}
+      />
     </div>
   );
 };

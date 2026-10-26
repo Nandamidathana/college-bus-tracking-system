@@ -110,6 +110,19 @@ export const studentApi = {
   updateBoardingPoint: (data: { name?: string; latitude: number; longitude: number }) =>
     api.put('/student/boarding-point', data),
   getNotifications: () => api.get('/student/notifications'),
+  getPreferences: () => api.get('/student/preferences'),
+  updatePreferences: (data: any) => api.post('/student/preferences', data),
+  subscribePush: (data: any) => api.post('/student/push-subscribe', data),
+  unsubscribePush: (data: any) => api.post('/student/push-unsubscribe', data),
+  confirmBoarding: (tripId: string) => api.post(`/student/trips/${tripId}/board`),
+  alightBoarding: (tripId: string) => api.post(`/student/trips/${tripId}/alight`),
+  getBoardingStatus: (tripId: string) => api.get(`/student/boarding-status/${tripId}`),
+  createGuardianLink: (data: { busId?: string; label?: string; expiryHours?: number }) =>
+    api.post('/student/guardian-link', data),
+  getGuardianLinks: () => api.get('/student/guardian-links'),
+  revokeGuardianLink: (id: string) => api.delete(`/student/guardian-links/${id}`),
+  markNotificationRead: (id: string) => api.put(`/student/notifications/${id}/read`),
+  markAllNotificationsRead: () => api.put('/student/notifications/read-all'),
 };
 
 export const driverApi = {
@@ -120,6 +133,18 @@ export const driverApi = {
     api.post('/driver/trips/start', data),
   endTrip: () => api.post('/driver/trips/end'),
   changeBus: (data: { newBusId?: string; newBusNumber?: string }) => api.put('/driver/change-bus', data),
+  updateOccupancy: (busId: string, data: { currentOccupancy?: number; occupancyStatus?: string }) =>
+    api.put(`/driver/buses/${busId}/occupancy`, data),
+  reportIncident: (data: {
+    type: string;
+    severity?: string;
+    description?: string;
+    delayMinutes?: number;
+    latitude?: number;
+    longitude?: number;
+    accuracy?: number;
+  }) => api.post('/driver/incidents', data),
+  getIncidents: () => api.get('/driver/incidents'),
 };
 
 export const adminApi = {
@@ -144,4 +169,13 @@ export const adminApi = {
   exportMonthlyPerformance: (year: number, month: number) =>
     api.get('/admin/arrivals/export/monthly', { params: { year, month }, responseType: 'blob' }),
   simulateArrival: (data: any) => api.post('/admin/arrivals/simulate', data),
+  getIncidents: (params?: any) => api.get('/admin/incidents', { params }),
+  updateIncidentStatus: (id: string, data: { status?: string; resolutionNotes?: string }) =>
+    api.put(`/admin/incidents/${id}/status`, data),
+};
+
+export const publicApi = {
+  getVapidKey: () => api.get('/public/vapid-key'),
+  getGuardianTracking: (busId: string, token: string) =>
+    api.get(`/public/track/bus/${busId}`, { params: { token } }),
 };
