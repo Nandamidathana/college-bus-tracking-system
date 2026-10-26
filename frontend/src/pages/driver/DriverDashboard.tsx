@@ -346,40 +346,40 @@ export const DriverDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative text-pastel-darkText dark:text-white pb-16">
+    <div className="min-h-screen flex flex-col relative bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors pb-12">
       <Navbar />
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 py-5 space-y-6">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Messages */}
         {errorMessage && (
-          <div className="p-4 rounded-3xl bg-red-500/15 border border-red-500/40 text-red-900 dark:text-red-100 text-xs sm:text-sm flex items-start gap-3 shadow-glass">
-            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-600 dark:text-red-300" />
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs sm:text-sm flex items-start gap-3 shadow-xs">
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
             <div>
-              <span className="font-black block">GPS Alert</span>
-              <span className="font-semibold">{errorMessage}</span>
+              <span className="font-bold block">GPS Alert</span>
+              <span className="font-normal">{errorMessage}</span>
             </div>
           </div>
         )}
 
         {locationSuccessMsg && (
-          <div className="p-4 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-900 dark:text-emerald-100 text-xs sm:text-sm flex items-center gap-3 shadow-glass">
-            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
-            <span className="font-bold">{locationSuccessMsg}</span>
+          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-200 text-xs sm:text-sm flex items-center gap-3 shadow-xs">
+            <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <span className="font-medium">{locationSuccessMsg}</span>
           </div>
         )}
 
         {/* Driver Control Card */}
-        <div className="water-glass rounded-3xl sm:rounded-4xl p-6 sm:p-8 shadow-glass space-y-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 sm:p-7 border border-slate-200 dark:border-slate-700 shadow-xs space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-black/5 dark:border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-700/60">
             <div>
-              <span className="text-[11px] font-black uppercase tracking-wider text-brand-700 dark:text-pastel-softTeal">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Driver Navigation Console
               </span>
-              <h2 className="text-xl sm:text-2xl font-black mt-0.5">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-0.5">
                 {driver?.driverName || user?.name || 'Driver'}
-              </h2>
-              <span className="text-xs font-bold subtext-muted block mt-0.5">
+              </h1>
+              <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5 font-medium">
                 {user?.college?.name || 'SRGEC Transit'}
               </span>
             </div>
@@ -388,7 +388,7 @@ export const DriverDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={handleForceGpsLock}
-                className="btn-pill-secondary text-xs py-2 px-3.5 gap-1.5"
+                className="py-1.5 px-3 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
                 title="Refresh device GPS lock"
               >
                 <Crosshair className="w-3.5 h-3.5" />
@@ -396,35 +396,37 @@ export const DriverDashboard: React.FC = () => {
               </button>
 
               {isTracking ? (
-                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500 text-slate-950 text-xs font-black shadow-pill-teal animate-pulse">
-                  <Radio className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>TRIP ACTIVE</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-white/10 border border-black/10 text-slate-700 dark:text-slate-300 text-xs font-black">
-                  <span>🟢 READY</span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium">
+                  <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                  <span>READY</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Assigned Bus Selector */}
-          <div className="space-y-2">
-            <label className="block text-xs font-black uppercase tracking-wider subtext-muted">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
               Assigned Vehicle
             </label>
             {isTracking ? (
-              <div className="p-4 sm:p-5 rounded-2xl bg-pastel-cream/60 dark:bg-brand-900/40 border border-amber-300 dark:border-white/10 flex items-center justify-between shadow-sm">
+              <div className="p-4 sm:p-5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 dark:text-pastel-yellow block">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                     Active Trip Bus
                   </span>
-                  <span className="text-2xl sm:text-3xl font-black text-pastel-darkText dark:text-white mt-0.5 block">
+                  <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-0.5 block">
                     Bus #{selectedBus?.busNumber || 'BUS'}
                   </span>
                 </div>
-                <div className="text-xs font-extrabold text-brand-700 dark:text-pastel-softTeal">
-                  Broadcasting Live 📡
+                <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Broadcasting Live</span>
                 </div>
               </div>
             ) : (
@@ -436,7 +438,7 @@ export const DriverDashboard: React.FC = () => {
                     const b = buses.find((item) => item.id === e.target.value);
                     if (b) setSelectedBus(b);
                   }}
-                  className="w-full water-glass-input rounded-full px-4 py-3 text-sm sm:text-base font-black appearance-none cursor-pointer pr-10"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-sm font-semibold text-slate-900 dark:text-white appearance-none cursor-pointer pr-10 focus:outline-none focus:border-blue-500"
                 >
                   {buses.map((b) => (
                     <option key={b.id} value={b.id}>
@@ -444,7 +446,7 @@ export const DriverDashboard: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-brand-600">
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
                   ▼
                 </div>
               </div>
@@ -453,8 +455,8 @@ export const DriverDashboard: React.FC = () => {
 
           {/* Trip Schedule Switcher */}
           {!isTracking && (
-            <div className="space-y-2.5">
-              <label className="block text-xs font-black uppercase tracking-wider subtext-muted">
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                 Trip Direction
               </label>
 
@@ -462,22 +464,24 @@ export const DriverDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedTripType('MORNING_PICKUP')}
-                  className={`p-4 rounded-3xl border text-left flex items-start gap-3 transition-all ${
+                  className={`p-4 rounded-xl border text-left flex items-start gap-3 transition-colors ${
                     selectedTripType === 'MORNING_PICKUP'
-                      ? 'bg-pastel-yellow/40 border-amber-400 shadow-pill-yellow'
-                      : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10'
+                      ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 text-blue-900 dark:text-blue-100'
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  <span className="text-2xl">🌅</span>
+                  <div className="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <Navigation className="w-5 h-5" />
+                  </div>
                   <div>
-                    <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-pastel-yellow block">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block">
                       Morning Pickup Trip
                     </span>
-                    <span className="text-sm font-extrabold block text-pastel-darkText dark:text-white mt-0.5">
+                    <span className="text-sm font-bold block text-slate-900 dark:text-white mt-0.5">
                       To College Gate (SRGEC)
                     </span>
-                    <span className="text-[11px] subtext-muted block mt-0.5 font-semibold">
-                      Village stops ➔ College Gate (&le;100m geofence)
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5 font-normal">
+                      Village stops &rarr; College Gate (&le;100m geofence)
                     </span>
                   </div>
                 </button>
@@ -485,22 +489,24 @@ export const DriverDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSelectedTripType('EVENING_RETURN')}
-                  className={`p-4 rounded-3xl border text-left flex items-start gap-3 transition-all ${
+                  className={`p-4 rounded-xl border text-left flex items-start gap-3 transition-colors ${
                     selectedTripType === 'EVENING_RETURN'
-                      ? 'bg-pastel-mint/60 border-brand-400 shadow-pill-teal'
-                      : 'bg-white/60 dark:bg-white/5 border-black/5 dark:border-white/10'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-900 dark:text-emerald-100'
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  <span className="text-2xl">🌆</span>
+                  <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Repeat className="w-5 h-5" />
+                  </div>
                   <div>
-                    <span className="text-xs font-black uppercase tracking-wider text-brand-800 dark:text-pastel-softTeal block">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                       Evening Return Trip
                     </span>
-                    <span className="text-sm font-extrabold block text-pastel-darkText dark:text-white mt-0.5">
+                    <span className="text-sm font-bold block text-slate-900 dark:text-white mt-0.5">
                       To Village Terminus / Depot
                     </span>
-                    <span className="text-[11px] subtext-muted block mt-0.5 font-semibold">
-                      College Gate ➔ Village drop-offs (&le;100m geofence)
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-0.5 font-normal">
+                      College Gate &rarr; Village drop-offs (&le;100m geofence)
                     </span>
                   </div>
                 </button>
@@ -515,9 +521,9 @@ export const DriverDashboard: React.FC = () => {
                 type="button"
                 onClick={handleStartTrip}
                 disabled={actionLoading || !selectedBusId}
-                className="btn-pill-yellow w-full text-lg sm:text-xl py-4 sm:py-5 gap-3 shadow-pill-yellow uppercase tracking-wider"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base sm:text-lg py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2.5 transition-colors shadow-sm disabled:opacity-60"
               >
-                <Play className="w-6 h-6 fill-pastel-darkText" />
+                <Play className="w-5 h-5 fill-white" />
                 <span>START {selectedTripType === 'EVENING_RETURN' ? 'RETURN TRIP' : 'MORNING TRIP'}</span>
               </button>
             ) : (
@@ -525,44 +531,44 @@ export const DriverDashboard: React.FC = () => {
                 type="button"
                 onClick={handleEndTrip}
                 disabled={actionLoading}
-                className="w-full bg-red-600 hover:bg-red-500 text-white font-black text-lg sm:text-xl py-4 sm:py-5 rounded-full flex items-center justify-center gap-3 shadow-xl shadow-red-600/30 transition-all uppercase tracking-wider"
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-base sm:text-lg py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2.5 transition-colors shadow-sm"
               >
-                <Square className="w-6 h-6 fill-white" />
+                <Square className="w-5 h-5 fill-white" />
                 <span>END TRIP</span>
               </button>
             )}
           </div>
 
           {/* Live Telemetry Diagnostic Cards */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-3 shadow-sm">
+          <div className="p-4 sm:p-5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span className="text-xs font-black uppercase tracking-wider text-brand-700 dark:text-pastel-softTeal">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                   GPS Status: {telemetry.accuracy > 0 ? `Active (±${Math.round(telemetry.accuracy)}m)` : 'Acquiring...'}
                 </span>
               </div>
-              <span className="text-xs font-mono font-bold subtext-muted">
-                Sent: #{telemetry.updateCount}
+              <span className="text-xs font-mono font-medium text-slate-500 dark:text-slate-400">
+                Updates Sent: #{telemetry.updateCount}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
-              <div className="p-3 bg-white/80 dark:bg-brand-900/50 rounded-2xl border border-black/5 dark:border-white/10">
-                <span className="text-[10px] font-bold uppercase subtext-muted block">Speed</span>
-                <span className="text-base font-black text-pastel-darkText dark:text-white">{telemetry.speed} km/h</span>
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400 block">Speed</span>
+                <span className="text-base font-bold text-slate-900 dark:text-white">{telemetry.speed} km/h</span>
               </div>
-              <div className="p-3 bg-white/80 dark:bg-brand-900/50 rounded-2xl border border-black/5 dark:border-white/10">
-                <span className="text-[10px] font-bold uppercase subtext-muted block">Accuracy</span>
-                <span className="text-base font-black text-emerald-700 dark:text-emerald-400">&plusmn;{telemetry.accuracy || 5} m</span>
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400 block">Accuracy</span>
+                <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">&plusmn;{telemetry.accuracy || 5} m</span>
               </div>
-              <div className="p-3 bg-white/80 dark:bg-brand-900/50 rounded-2xl border border-black/5 dark:border-white/10">
-                <span className="text-[10px] font-bold uppercase subtext-muted block">Heading</span>
-                <span className="text-base font-black text-pastel-darkText dark:text-white">{telemetry.heading}&deg;</span>
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400 block">Heading</span>
+                <span className="text-base font-bold text-slate-900 dark:text-white">{telemetry.heading}&deg;</span>
               </div>
-              <div className="p-3 bg-white/80 dark:bg-brand-900/50 rounded-2xl border border-black/5 dark:border-white/10">
-                <span className="text-[10px] font-bold uppercase subtext-muted block">Sync Time</span>
-                <span className="text-xs font-bold text-brand-700 dark:text-pastel-yellow font-mono mt-0.5 block truncate">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400 block">Sync Time</span>
+                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 font-mono mt-0.5 block truncate">
                   {telemetry.lastSent || 'Live'}
                 </span>
               </div>
@@ -571,26 +577,26 @@ export const DriverDashboard: React.FC = () => {
         </div>
 
         {/* Live Driver Map */}
-        <div className="water-glass rounded-3xl sm:rounded-4xl p-4 sm:p-6 shadow-glass space-y-3">
-          <div className="flex items-center justify-between px-2">
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-xs space-y-3">
+          <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <Compass className="w-4 h-4 text-brand-600 dark:text-pastel-softTeal" />
-              <h3 className="text-xs font-black uppercase tracking-wider text-pastel-darkText dark:text-white">
+              <Compass className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                 Driver Route Map
-              </h3>
+              </h2>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={toggleRouteSimulation}
-                className="btn-pill-secondary text-[11px] py-1 px-3"
+                className="py-1 px-3 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
               >
-                {isSimulatingRoute ? '⏹ Stop Demo' : '▶ Simulate Demo Route'}
+                {isSimulatingRoute ? 'Stop Simulation' : 'Simulate Route Demo'}
               </button>
             </div>
           </div>
 
-          <div className="h-[360px] sm:h-[420px] rounded-3xl overflow-hidden shadow-inner border border-black/5 dark:border-white/10">
+          <div className="h-[360px] sm:h-[420px] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
             <BusMap
               busLocation={
                 telemetry.latitude !== 0

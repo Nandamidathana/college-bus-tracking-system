@@ -15,6 +15,7 @@ import {
   Gauge,
   Flag,
   Navigation,
+  Route as RouteIcon,
 } from 'lucide-react';
 
 interface WhereIsMyBusTrackerProps {
@@ -210,27 +211,27 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Header Card */}
-      <div className="water-glass rounded-3xl p-5 sm:p-6 shadow-glass space-y-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow font-black text-xl shadow-pill-teal shrink-0">
-              🚉
+            <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold shrink-0">
+              <RouteIcon className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-black uppercase tracking-wider text-brand-700 dark:text-pastel-softTeal">
-                  Station Progression Timeline
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Stop Progression Timeline
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pastel-yellow text-pastel-darkText font-mono">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                   Bus #{busNumber}
                 </span>
               </div>
-              <h2 className="text-base sm:text-lg font-black text-pastel-darkText dark:text-white mt-0.5">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
                 {route?.name || 'Campus Transit Route'}
               </h2>
-              <div className="text-[11px] subtext-muted flex items-center gap-2 mt-0.5 font-bold">
-                <span>{tripType === 'EVENING_RETURN' ? '🌆 Evening Return' : '🌅 Morning College Pickup'}</span>
-                <span>•</span>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5 font-medium">
+                <span>{tripType === 'EVENING_RETURN' ? 'Evening Return' : 'Morning College Pickup'}</span>
+                <span>&bull;</span>
                 <span>{stops.length} Stops Total</span>
               </div>
             </div>
@@ -240,29 +241,29 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
             <button
               type="button"
               onClick={onSwitchToMap}
-              className="btn-pill-primary text-xs py-2 px-4 gap-1.5 self-start sm:self-auto shadow-sm"
+              className="py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto transition-colors shadow-xs"
             >
-              <span>🗺️ View on Map</span>
+              <span>View on Map</span>
             </button>
           )}
         </div>
 
         {/* 2 KM Readiness Alert Banner */}
         {isWithin2km && (
-          <div className={`p-4 rounded-2xl border-2 flex items-center justify-between shadow-glass animate-pulse ${
+          <div className={`p-4 rounded-lg border flex items-center justify-between ${
             isAtStop
-              ? 'bg-emerald-500/20 border-emerald-400 text-emerald-900 dark:text-emerald-100'
-              : 'bg-pastel-yellow/30 border-amber-400 text-amber-950 dark:text-amber-100'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100'
+              : 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-100'
           }`}>
             <div className="flex items-center gap-3">
-              <span className="text-2xl">{isAtStop ? '🚌' : '⚡'}</span>
+              <Radio className="w-5 h-5 text-amber-600 animate-pulse shrink-0" />
               <div>
-                <span className="text-[11px] font-black uppercase tracking-wider block">
-                  {isAtStop ? 'BUS AT YOUR BOARDING STOP NOW!' : 'BUS APPROACHING (WITHIN 2 KM)'}
+                <span className="text-xs font-bold uppercase tracking-wider block">
+                  {isAtStop ? 'Bus at your boarding stop now' : 'Bus approaching (Within 2 KM)'}
                 </span>
-                <p className="text-xs sm:text-sm font-extrabold mt-0.5">
+                <p className="text-xs sm:text-sm font-medium mt-0.5">
                   {isAtStop
-                    ? `Bus ${busNumber} has arrived at ${studentStopTelemetry?.name || 'your stop'}. Board now!`
+                    ? `Bus #${busNumber} has arrived at ${studentStopTelemetry?.name || 'your stop'}. Board now!`
                     : `Bus is ${studentStopTelemetry?.distanceKm} away (~${studentStopTelemetry?.etaMinutes} mins). Please get ready at your stop!`}
                 </p>
               </div>
@@ -273,31 +274,31 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
         {/* Live Telemetry Chips */}
         {isLive && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-            <div className="p-3 bg-white/70 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10 text-center">
-              <span className="text-[10px] font-bold uppercase subtext-muted block">Live Speed</span>
-              <span className="text-sm sm:text-base font-black text-pastel-darkText dark:text-white mt-0.5 flex items-center justify-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <div className="p-2.5 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+              <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400 block">Live Speed</span>
+              <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-0.5 flex items-center justify-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 {busSpeed} km/h
               </span>
             </div>
 
-            <div className="p-3 bg-white/70 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10 text-center">
-              <span className="text-[10px] font-bold uppercase subtext-muted block">Your Stop Dist</span>
-              <span className="text-sm sm:text-base font-black text-brand-700 dark:text-pastel-softTeal mt-0.5 block truncate">
-                {studentStopTelemetry ? studentStopTelemetry.distanceKm : '❌ Off-Route'}
+            <div className="p-2.5 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+              <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400 block">Stop Distance</span>
+              <span className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200 mt-0.5 block truncate">
+                {studentStopTelemetry ? studentStopTelemetry.distanceKm : 'Off-Route'}
               </span>
             </div>
 
-            <div className="p-3 bg-white/70 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10 text-center">
-              <span className="text-[10px] font-bold uppercase subtext-muted block">Arrival ETA</span>
-              <span className="text-sm sm:text-base font-black text-amber-700 dark:text-pastel-yellow mt-0.5 block">
+            <div className="p-2.5 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+              <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400 block">Arrival ETA</span>
+              <span className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 mt-0.5 block">
                 {studentStopTelemetry?.etaMinutes !== null ? `~${studentStopTelemetry?.etaMinutes} mins` : `~${displayEta} mins`}
               </span>
             </div>
 
-            <div className="p-3 bg-white/70 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10 text-center">
-              <span className="text-[10px] font-bold uppercase subtext-muted block">Terminus</span>
-              <span className="text-xs font-black text-pastel-darkText dark:text-white mt-1 block truncate">
+            <div className="p-2.5 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+              <span className="text-[10px] font-semibold uppercase text-slate-500 dark:text-slate-400 block">Terminus</span>
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-1 block truncate">
                 {destinationName || (college?.name ? `${college.name} Gate` : 'Campus Gate')}
               </span>
             </div>
@@ -305,22 +306,22 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
         )}
       </div>
 
-      {/* Vertical Progression Rail */}
-      <div className="water-glass rounded-3xl p-5 sm:p-7 shadow-glass space-y-5">
-        <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 pb-3">
+      {/* Progression Rail */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-3">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <h3 className="text-xs font-black uppercase tracking-wider text-pastel-darkText dark:text-white">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
               Stop-by-Stop Progression Rail
             </h3>
           </div>
-          <span className="text-[11px] text-brand-700 dark:text-pastel-softTeal font-mono font-extrabold">
-            {isLive ? '🟢 GPS BROADCAST ACTIVE' : '⚪ OFFLINE'}
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-medium">
+            {isLive ? 'GPS BROADCAST ACTIVE' : 'OFFLINE'}
           </span>
         </div>
 
         {/* The Rail */}
-        <div className="relative pl-7 sm:pl-8 space-y-7 before:absolute before:left-3.5 before:top-3 before:bottom-3 before:w-1 before:bg-brand-100 dark:before:bg-brand-900 before:rounded-full">
+        <div className="relative pl-7 sm:pl-8 space-y-5 before:absolute before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700">
           {stopsWithTelemetry.map((stop, idx) => {
             const isFirst = idx === 0;
             const isLast = idx === stopsWithTelemetry.length - 1;
@@ -329,26 +330,24 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
               <div
                 key={stop.id || idx}
                 onClick={() => onSelectStop && onSelectStop(stop)}
-                className={`relative group cursor-pointer transition-all ${
-                  stop.isStudentStop ? 'scale-[1.01]' : ''
-                }`}
+                className="relative group cursor-pointer transition-all"
               >
                 {/* Node badge on rail */}
                 <div
-                  className={`absolute -left-7 sm:-left-8 w-7 h-7 rounded-full flex items-center justify-center font-black text-xs transition-all shadow-sm ${
+                  className={`absolute -left-7 sm:-left-8 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all shadow-xs ${
                     stop.isPassed
-                      ? 'bg-pastel-mint text-brand-900 border-2 border-white ring-2 ring-emerald-400/40'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-400'
                       : stop.isCurrentNext
-                      ? 'bg-pastel-yellow text-pastel-darkText border-2 border-white ring-4 ring-amber-400/40 animate-bounce'
+                      ? 'bg-blue-600 text-white border-2 border-white ring-2 ring-blue-400'
                       : stop.isStudentStop
-                      ? 'bg-brand-600 text-pastel-yellow border-2 border-white ring-4 ring-brand-500/40'
-                      : 'bg-white dark:bg-brand-800 text-slate-700 dark:text-slate-200 border-2 border-slate-200 dark:border-white/10'
+                      ? 'bg-blue-500 text-white border-2 border-white ring-2 ring-blue-300'
+                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600'
                   }`}
                 >
                   {stop.isPassed ? (
-                    <CheckCircle2 className="w-4 h-4 text-brand-900" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   ) : stop.isCurrentNext ? (
-                    <BusIcon className="w-4 h-4 text-pastel-darkText" />
+                    <BusIcon className="w-3.5 h-3.5 text-white" />
                   ) : (
                     <span>{stop.sequence}</span>
                   )}
@@ -356,65 +355,65 @@ export const WhereIsMyBusTracker: React.FC<WhereIsMyBusTrackerProps> = ({
 
                 {/* Stop Card */}
                 <div
-                  className={`p-4 rounded-2xl border transition-all shadow-sm ${
+                  className={`p-3.5 rounded-lg border transition-colors ${
                     stop.isStudentStop
-                      ? 'bg-pastel-cream/70 dark:bg-brand-800/60 border-2 border-amber-400 shadow-pill-yellow'
+                      ? 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-400'
                       : stop.isCurrentNext
-                      ? 'bg-pastel-yellow/30 dark:bg-amber-950/40 border-2 border-pastel-yellow'
-                      : 'bg-white/70 dark:bg-white/5 border-black/5 dark:border-white/10 hover:border-brand-400/40'
+                      ? 'bg-slate-50 dark:bg-slate-750 border-blue-300 dark:border-blue-700'
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300'
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-black text-sm sm:text-base text-pastel-darkText dark:text-white">
+                        <span className="font-bold text-sm text-slate-900 dark:text-white">
                           {stop.name}
                         </span>
 
                         {isFirst && (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-brand-100 text-brand-900">
+                          <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                             Origin
                           </span>
                         )}
 
                         {isLast && (
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-pastel-mint text-brand-900">
+                          <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                             Terminus
                           </span>
                         )}
 
                         {stop.isStudentStop && (
-                          <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-brand-600 text-pastel-yellow shadow-sm flex items-center gap-1">
+                          <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
-                            YOUR STOP
+                            Your Stop
                           </span>
                         )}
                       </div>
 
-                      <div className="text-[11px] subtext-muted font-mono mt-0.5">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                         GPS: {stop.latitude.toFixed(4)}, {stop.longitude.toFixed(4)}
                       </div>
                     </div>
 
                     <div className="text-left sm:text-right">
                       {stop.isPassed ? (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-pastel-mint text-brand-900 text-[11px] font-black">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Passed</span>
-                        </div>
+                        </span>
                       ) : stop.distanceMeters !== null ? (
                         <div>
-                          <div className="text-xs sm:text-sm font-black text-pastel-darkText dark:text-white">
+                          <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                             {stop.distanceKm} away
                           </div>
                           {stop.etaMinutes !== null && stop.etaMinutes > 0 && (
-                            <div className="text-[11px] text-amber-700 dark:text-pastel-yellow font-extrabold">
+                            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
                               (~{stop.etaMinutes} mins)
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-xs font-bold text-slate-400">Scheduled</span>
+                        <span className="text-xs text-slate-400 font-medium">Scheduled</span>
                       )}
                     </div>
                   </div>

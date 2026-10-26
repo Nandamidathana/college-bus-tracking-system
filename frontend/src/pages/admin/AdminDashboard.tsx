@@ -116,22 +116,24 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Admin Overview</h1>
-          <p className="text-xs subtext-muted font-medium mt-0.5">
-            Real-time fleet monitoring and transport statistics for {college?.name || 'College'}.
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Admin Overview
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            Real-time fleet monitoring and transport statistics for {college?.name || 'SRGEC'}.
           </p>
         </div>
 
         <button
           onClick={fetchDashboard}
-          className="inline-flex items-center gap-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-slate-200 border border-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold transition-colors self-start sm:self-auto shadow"
+          className="inline-flex items-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors self-start sm:self-auto shadow-xs"
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          Refresh Stats
+          <span>Refresh Data</span>
         </button>
       </div>
 
@@ -142,23 +144,23 @@ export const AdminDashboard: React.FC = () => {
           return (
             <div
               key={i}
-              className="glass-card p-5 rounded-2xl border border-white/10 shadow-xl flex items-center justify-between"
+              className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-between"
             >
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider subtext-muted">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {card.title}
                 </span>
                 <div className="mt-1 flex items-baseline gap-2">
-                  <span className="text-3xl font-black">{card.value}</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{card.value}</span>
                   {card.active !== undefined && (
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
                       {card.active} Active
                     </span>
                   )}
                 </div>
               </div>
-              <div className={`w-12 h-12 rounded-xl ${card.bg} flex items-center justify-center ${card.color}`}>
-                <Icon className="w-6 h-6" />
+              <div className={`w-11 h-11 rounded-lg bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400`}>
+                <Icon className="w-5 h-5" />
               </div>
             </div>
           );
@@ -166,20 +168,20 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Main Live Fleet Radar Map */}
-      <div className="glass-panel rounded-3xl p-5 shadow-2xl space-y-4 border border-white/10">
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></div>
-            <h2 className="text-sm font-extrabold uppercase tracking-wider">
-              Live Fleet Tracking Map ({liveBuses.filter((b) => b.latitude).length} Tracking)
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+              Live Fleet Map ({liveBuses.filter((b) => b.latitude).length} Tracking)
             </h2>
           </div>
-          <span className="text-xs subtext-muted font-mono font-bold">
-            College HQ: {college?.latitude?.toFixed(4)}, {college?.longitude?.toFixed(4)}
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono font-medium">
+            Campus HQ: {college?.latitude?.toFixed(4)}, {college?.longitude?.toFixed(4)}
           </span>
         </div>
 
-        <div className="h-[480px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div className="h-[480px] w-full rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
           <BusMap
             college={college}
             busesList={liveBuses
@@ -206,13 +208,13 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Live Active Buses Roster Table */}
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <h3 className="text-xs font-bold uppercase tracking-wider subtext-muted mb-3">
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/60">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
             Active Trips Stream
           </h3>
 
           {liveBuses.length === 0 ? (
-            <div className="text-center py-6 subtext-muted text-xs font-medium">
+            <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-xs font-normal">
               No buses currently on an active trip. When a driver clicks [ START TRIP ], their bus will appear here in real time.
             </div>
           ) : (
@@ -220,33 +222,34 @@ export const AdminDashboard: React.FC = () => {
               {liveBuses.map((bus) => (
                 <div
                   key={bus.busId}
-                  className="glass-card rounded-2xl p-3.5 space-y-2 border border-white/10 hover:border-blue-500/40 transition-all shadow-sm"
+                  className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3.5 space-y-2 border border-slate-200 dark:border-slate-700 hover:border-blue-400 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-black font-mono">
-                      🚌 {bus.busNumber}
+                    <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <BusIcon className="w-4 h-4 text-blue-600" />
+                      <span>Bus #{bus.busNumber}</span>
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                         bus.status === 'LIVE'
-                          ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40'
-                          : 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/40'
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                          : 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
                       }`}
                     >
                       {bus.status}
                     </span>
                   </div>
 
-                  <div className="text-xs space-y-0.5 subtext-muted">
+                  <div className="text-xs space-y-0.5 text-slate-600 dark:text-slate-300">
                     <div>
-                      Driver: <span className="font-bold">{bus.driverName}</span>
+                      Driver: <span className="font-semibold text-slate-800 dark:text-slate-200">{bus.driverName}</span>
                     </div>
                     <div>
-                      Route: <span className="text-indigo-600 dark:text-indigo-300 font-bold">{bus.routeName}</span>
+                      Route: <span className="font-semibold text-blue-600 dark:text-blue-400">{bus.routeName}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] subtext-muted pt-1.5 border-t border-slate-200 dark:border-slate-800/80 font-mono font-medium">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-slate-200 dark:border-slate-700/60 font-mono font-medium">
                     <span>Speed: {Math.round(bus.speed || 0)} km/h</span>
                     <span>Accuracy: &plusmn;{Math.round(bus.accuracy || 5)}m</span>
                   </div>

@@ -20,20 +20,20 @@ export const Navbar: React.FC = () => {
     switch (role) {
       case 'ADMIN':
         return (
-          <span className="role-badge-admin px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 shadow-sm">
-            <Shield className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" /> Admin
+          <span className="role-badge-admin px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" /> Admin
           </span>
         );
       case 'DRIVER':
         return (
-          <span className="role-badge-driver px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 shadow-sm">
-            <Navigation className="w-3.5 h-3.5 text-teal-800 dark:text-teal-200" /> Driver
+          <span className="role-badge-driver px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5">
+            <Navigation className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Driver
           </span>
         );
       case 'STUDENT':
         return (
-          <span className="role-badge-student px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 shadow-sm">
-            <Compass className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" /> Student
+          <span className="role-badge-student px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Student
           </span>
         );
       default:
@@ -43,20 +43,24 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2 transition-all">
-        <div className="max-w-7xl mx-auto water-glass rounded-full sm:rounded-3xl px-4 sm:px-6 h-16 flex items-center justify-between shadow-glass">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo & College Title */}
           <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center shadow-pill-teal group-hover:scale-105 transition-transform shrink-0">
-              <Bus className="w-5 h-5 text-pastel-yellow" />
+            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs group-hover:bg-blue-700 transition-colors shrink-0">
+              <Bus className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-base sm:text-lg font-black tracking-tight block text-pastel-darkText dark:text-white">
+              <span className="text-base font-bold tracking-tight block text-slate-900 dark:text-white leading-tight">
                 CollegeBus Live
               </span>
-              {user?.college?.code && (
-                <span className="block text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-brand-600 dark:text-pastel-softTeal">
+              {user?.college?.code ? (
+                <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                   {user.college.code} • Campus Transit
+                </span>
+              ) : (
+                <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  Campus Transit System
                 </span>
               )}
             </div>
@@ -67,18 +71,19 @@ export const Navbar: React.FC = () => {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 sm:px-3 sm:py-1.5 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/10 hover:bg-white transition-all flex items-center gap-1.5 text-xs font-extrabold shadow-sm"
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors flex items-center gap-1.5 text-xs font-medium"
               title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+              aria-label="Toggle theme"
             >
               {theme === 'light' ? (
                 <>
-                  <Moon className="w-4 h-4 text-brand-600" />
-                  <span className="hidden md:inline text-pastel-darkText font-extrabold">Dark</span>
+                  <Moon className="w-4 h-4 text-slate-600" />
+                  <span className="hidden md:inline font-medium">Dark</span>
                 </>
               ) : (
                 <>
-                  <Sun className="w-4 h-4 text-pastel-yellow" />
-                  <span className="hidden md:inline text-amber-200 font-extrabold">Light</span>
+                  <Sun className="w-4 h-4 text-amber-400" />
+                  <span className="hidden md:inline font-medium">Light</span>
                 </>
               )}
             </button>
@@ -88,32 +93,32 @@ export const Navbar: React.FC = () => {
                 <div className="hidden sm:block">
                   {getRoleBadge(user.role)}
                 </div>
-                
+
                 {user.role === 'STUDENT' ? (
                   <button
                     onClick={() => setShowProfileModal(true)}
-                    className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full border border-brand-500/30 bg-pastel-mint/50 dark:bg-brand-800/50 hover:bg-pastel-mint text-xs sm:text-sm font-extrabold text-brand-900 dark:text-white transition-all shadow-sm"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 transition-colors"
                     title="View & Edit Boarding Point"
                   >
-                    <div className="w-5 h-5 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center text-[10px]">
+                    <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
-                    <span className="max-w-[80px] sm:max-w-none truncate">{user.name}</span>
+                    <span className="max-w-[85px] sm:max-w-none truncate">{user.name}</span>
                   </button>
                 ) : (
-                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/10 text-xs sm:text-sm font-bold">
-                    <User className="w-4 h-4 text-brand-600" />
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    <User className="w-4 h-4 text-slate-500" />
                     <span>{user.name}</span>
                   </div>
                 )}
 
                 <button
                   onClick={handleLogout}
-                  className="p-2 sm:px-3 sm:py-1.5 rounded-full border border-red-500/20 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-300 flex items-center gap-1 text-xs sm:text-sm font-extrabold transition-all shadow-sm"
+                  className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors"
                   title="Logout"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span className="hidden sm:inline">Sign out</span>
                 </button>
               </>
             ) : null}

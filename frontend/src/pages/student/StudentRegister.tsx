@@ -50,12 +50,6 @@ export const StudentRegister: React.FC = () => {
     [colleges, selectedCollegeId]
   );
 
-  const handleLocationSelect = (locName: string, lat?: number, lng?: number) => {
-    setBoardingLocation(locName);
-    if (lat !== undefined) setBoardingLat(lat);
-    if (lng !== undefined) setBoardingLng(lng);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -100,25 +94,25 @@ export const StudentRegister: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between text-pastel-darkText dark:text-white">
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
       <Navbar />
-      <div className="flex-1 flex flex-col justify-center py-6 sm:py-10 px-3 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center space-y-2">
-          <Link to="/" className="inline-flex items-center gap-2.5 group">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 border border-pastel-yellow/60 flex items-center justify-center text-pastel-yellow group-hover:scale-105 transition-transform shadow-pill-teal">
-              <Compass className="w-7 h-7" />
-            </div>
-          </Link>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Student Registration</h2>
-          <p className="text-xs font-semibold subtext-muted">
-            SRGEC Campus Transit System
+      <div className="flex-1 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center space-y-1.5">
+          <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto mb-3 shadow-xs">
+            <Compass className="w-6 h-6" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Student Registration
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            Register your student account for campus transit
           </p>
         </div>
 
         <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-xl">
-          <div className="water-glass py-7 px-5 sm:px-8 rounded-3xl sm:rounded-4xl shadow-glass border border-white/80 space-y-6">
+          <div className="bg-white dark:bg-slate-800 py-7 px-6 sm:px-8 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-5">
             {error && (
-              <div className="p-3.5 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-900 dark:text-red-200 text-xs flex items-start gap-2.5 font-bold">
+              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs flex items-start gap-2.5 font-medium">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
                 <span>{error}</span>
               </div>
@@ -128,11 +122,11 @@ export const StudentRegister: React.FC = () => {
               {/* Full Name & Roll Number Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Full Name
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                       <User className="w-4 h-4" />
                     </div>
                     <input
@@ -140,14 +134,14 @@ export const StudentRegister: React.FC = () => {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. John Doe"
-                      className="w-full water-glass-input rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm font-bold"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3.5 py-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Roll Number / Student ID
                   </label>
                   <input
@@ -155,7 +149,7 @@ export const StudentRegister: React.FC = () => {
                     value={rollNumber}
                     onChange={(e) => setRollNumber(e.target.value)}
                     placeholder="e.g. 21B91A0501"
-                    className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold tracking-wider uppercase"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-sm font-medium tracking-wide uppercase text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
@@ -163,26 +157,24 @@ export const StudentRegister: React.FC = () => {
 
               {/* College Card Display */}
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 flex items-center justify-between subtext-muted">
-                  <span>College</span>
-                  <span className="text-[10px] text-brand-700 dark:text-pastel-yellow font-extrabold">Autonomous Institution</span>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Institution
                 </label>
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-pastel-cream/70 dark:bg-brand-900/40 border border-amber-300 dark:border-white/10">
-                  <div className="w-8 h-8 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+                  <div className="w-8 h-8 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                     <School className="w-4 h-4" />
                   </div>
-                  <div className="text-xs font-bold leading-tight">
-                    <div className="text-slate-900 dark:text-white font-black">Seshadri Rao Gudlavalleru Engineering College</div>
-                    <div className="text-[10px] text-brand-700 dark:text-pastel-yellow font-bold">SRGEC, Gudlavalleru - 521356</div>
+                  <div className="text-xs leading-tight">
+                    <div className="font-semibold text-slate-900 dark:text-white">Seshadri Rao Gudlavalleru Engineering College</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">SRGEC, Gudlavalleru - 521356</div>
                   </div>
                 </div>
               </div>
 
               {/* Location Input for Boarding Point */}
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 flex items-center justify-between subtext-muted">
-                  <span>Boarding Stop / Hostel Location</span>
-                  <span className="text-[10px] text-brand-700 dark:text-pastel-yellow font-extrabold">Instant GPS Detection</span>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                  Boarding Stop / Pick-up Location
                 </label>
                 <LocationInput
                   value={boardingLocation}
@@ -193,7 +185,7 @@ export const StudentRegister: React.FC = () => {
                     if (lat !== undefined) setBoardingLat(lat);
                     if (lng !== undefined) setBoardingLng(lng);
                   }}
-                  placeholder="e.g. Himaja Boys Hostel, Gudlavalleru Bus Stand..."
+                  placeholder="e.g. Gudivada Bus Stand, Vijayawada Benz Circle..."
                   className="w-full"
                 />
               </div>
@@ -201,11 +193,11 @@ export const StudentRegister: React.FC = () => {
               {/* Password & Confirm Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
-                    Password
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
+                    Password / PIN
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                       <KeyRound className="w-4 h-4" />
                     </div>
                     <input
@@ -213,14 +205,14 @@ export const StudentRegister: React.FC = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full water-glass-input rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm font-bold"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3.5 py-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Confirm Password
                   </label>
                   <input
@@ -228,7 +220,7 @@ export const StudentRegister: React.FC = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
@@ -237,17 +229,17 @@ export const StudentRegister: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-pill-yellow w-full text-xs sm:text-sm py-3.5 gap-2 mt-4"
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-colors shadow-xs mt-3 disabled:opacity-60"
               >
-                {loading ? 'Creating Your Account...' : 'Register & Start Tracking'}
+                {loading ? 'Creating Account...' : 'Complete Registration'}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
 
-            <div className="text-center text-xs font-bold subtext-muted">
-              Already registered?{' '}
-              <Link to="/student/login" className="text-brand-700 dark:text-pastel-yellow underline ml-1">
-                Sign In to Your Account
+            <div className="text-center text-xs text-slate-500 dark:text-slate-400 pt-1">
+              Already have an account?{' '}
+              <Link to="/student/login" className="text-blue-600 dark:text-blue-400 hover:underline font-semibold ml-1">
+                Sign In
               </Link>
             </div>
           </div>

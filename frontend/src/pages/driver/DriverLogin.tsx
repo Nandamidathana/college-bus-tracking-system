@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
 import { Navbar } from '../../components/common/Navbar';
-import { Navigation, KeyRound, User, School, ArrowRight, AlertCircle } from 'lucide-react';
+import { Navigation, KeyRound, User, School, ArrowRight, AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 const DEFAULT_AP_COLLEGES = [
   { id: 'cmtlrqxgq0000v620e5otz0gg', name: 'Seshadri Rao Gudlavalleru Engineering College (SRGEC)', code: 'SRGEC' },
@@ -90,7 +90,6 @@ export const DriverLogin: React.FC = () => {
 
       if (res.data.success) {
         setForgotMsg(res.data.message || 'Driver PIN updated successfully!');
-        // Pre-fill login input
         setIdentifier(forgotIdentifier.trim());
         setPassword(newPin);
         setTimeout(() => {
@@ -105,54 +104,54 @@ export const DriverLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between text-pastel-darkText dark:text-white">
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
       <Navbar />
-      <div className="flex-1 flex flex-col justify-center py-6 sm:py-10 px-3 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
-          <Link to="/" className="inline-flex items-center gap-2.5 group">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 border border-pastel-yellow/60 flex items-center justify-center text-pastel-yellow group-hover:scale-105 transition-transform shadow-pill-teal">
-              <Navigation className="w-7 h-7" />
-            </div>
-          </Link>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Driver Login</h2>
-          <p className="text-xs font-semibold subtext-muted">
-            SRGEC Live GPS Broadcasting
+      <div className="flex-1 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-1.5">
+          <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center mx-auto mb-3 shadow-xs">
+            <Navigation className="w-6 h-6" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Driver Sign In
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            SRGEC Live GPS Navigation Console
           </p>
         </div>
 
         <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="water-glass py-7 px-5 sm:px-8 rounded-3xl sm:rounded-4xl shadow-glass border border-white/80">
+          <div className="bg-white dark:bg-slate-800 py-7 px-6 sm:px-8 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
             {error && (
-              <div className="mb-5 p-3.5 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-900 dark:text-red-200 text-xs flex items-start gap-2.5 font-bold">
+              <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 text-xs flex items-start gap-2.5 font-medium">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
                 <span>{error}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* College Card Display */}
+              {/* Institution badge */}
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Institution
                 </label>
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-pastel-cream/70 dark:bg-brand-900/40 border border-amber-300 dark:border-white/10">
-                  <div className="w-8 h-8 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+                  <div className="w-8 h-8 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                     <School className="w-4 h-4" />
                   </div>
-                  <div className="text-xs font-bold leading-tight">
-                    <div className="text-slate-900 dark:text-white font-black">Seshadri Rao Gudlavalleru Engineering College</div>
-                    <div className="text-[10px] text-brand-700 dark:text-pastel-yellow font-bold">SRGEC, Gudlavalleru</div>
+                  <div className="text-xs leading-tight">
+                    <div className="font-semibold text-slate-900 dark:text-white">Seshadri Rao Gudlavalleru Engineering College</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">SRGEC, Gudlavalleru</div>
                   </div>
                 </div>
               </div>
 
               {/* Phone or Driver ID */}
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Phone Number or Driver ID
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                     <User className="w-4 h-4" />
                   </div>
                   <input
@@ -160,7 +159,7 @@ export const DriverLogin: React.FC = () => {
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder="e.g. 9876543210 or DRV-01"
-                    className="w-full water-glass-input rounded-2xl pl-11 pr-4 py-2.5 text-xs sm:text-sm font-bold"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3.5 py-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                     required
                   />
                 </div>
@@ -169,7 +168,7 @@ export const DriverLogin: React.FC = () => {
               {/* Password */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-[11px] font-black uppercase tracking-wider subtext-muted">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                     Password / PIN
                   </label>
                   <button
@@ -180,13 +179,13 @@ export const DriverLogin: React.FC = () => {
                       setForgotMsg('');
                       setForgotError('');
                     }}
-                    className="text-xs text-brand-700 dark:text-pastel-yellow hover:underline font-bold"
+                    className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                   >
                     Forgot PIN?
                   </button>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-brand-600">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                     <KeyRound className="w-4 h-4" />
                   </div>
                   <input
@@ -194,7 +193,7 @@ export const DriverLogin: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full water-glass-input rounded-2xl pl-11 pr-4 py-2.5 text-xs sm:text-sm font-bold"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3.5 py-2 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                     required
                   />
                 </div>
@@ -203,16 +202,16 @@ export const DriverLogin: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-pill-yellow w-full text-xs sm:text-sm py-3.5 gap-2 mt-4"
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors shadow-xs mt-2 disabled:opacity-60"
               >
                 {loading ? 'Signing in...' : 'Sign In as Driver'}
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
 
-            <div className="mt-5 text-center text-xs font-bold subtext-muted">
+            <div className="mt-5 text-center text-xs text-slate-500 dark:text-slate-400">
               New Driver?{' '}
-              <Link to="/driver/register" className="text-brand-700 dark:text-pastel-yellow underline ml-1">
+              <Link to="/driver/register" className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold ml-1">
                 Register here
               </Link>
             </div>
@@ -220,99 +219,92 @@ export const DriverLogin: React.FC = () => {
         </div>
       </div>
 
-      {/* Forgot PIN / Password Recovery Modal */}
+      {/* Forgot PIN Recovery Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="water-glass max-w-md w-full p-6 sm:p-8 rounded-3xl sm:rounded-4xl shadow-glass border border-white/80 space-y-4 relative">
-            <div className="flex items-center justify-between pb-3 border-b border-pastel-yellow/30">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center font-bold">
-                  🔑
-                </div>
-                <div>
-                  <h3 className="text-base font-black">Reset Driver PIN</h3>
-                  <span className="text-[11px] subtext-muted">Instant Driver PIN Recovery</span>
-                </div>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-800 max-w-sm w-full p-6 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Reset Driver PIN</h3>
               <button
                 type="button"
                 onClick={() => setShowForgotModal(false)}
-                className="p-1.5 rounded-full hover:bg-black/10 transition-colors"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {forgotError && (
-              <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-900 dark:text-rose-200 text-xs font-bold flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-200 text-xs font-medium flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 <span>{forgotError}</span>
               </div>
             )}
 
             {forgotMsg && (
-              <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-start gap-2">
-                <span>✅ {forgotMsg}</span>
+              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 text-xs font-medium flex items-center gap-2 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{forgotMsg}</span>
               </div>
             )}
 
             <form onSubmit={handleForgotSubmit} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
-                  Your Driver Name or Phone Number
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Driver Name or Phone
                 </label>
                 <input
                   type="text"
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
-                  placeholder="e.g. Ramesh or 7036349676"
-                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
+                  placeholder="e.g. 9876543210 or DRV-01"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
-                  New Password / PIN (min 4 characters)
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  New PIN (min 4 characters)
                 </label>
                 <input
                   type="password"
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value)}
-                  placeholder="Enter new PIN or password"
-                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
+                  placeholder="••••"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider mb-1 subtext-muted">
-                  Confirm New Password / PIN
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Confirm New PIN
                 </label>
                 <input
                   type="password"
                   value={confirmPin}
                   onChange={(e) => setConfirmPin(e.target.value)}
-                  placeholder="Re-enter new PIN or password"
-                  className="w-full water-glass-input rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold"
+                  placeholder="••••"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-medium text-slate-900 dark:text-white"
                   required
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="px-4 py-2 rounded-full text-xs font-bold subtext-muted hover:bg-black/5"
+                  className="flex-1 py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="btn-pill-yellow text-xs py-2.5 px-5"
+                  className="flex-1 py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs disabled:opacity-60"
                 >
-                  {forgotLoading ? 'Updating...' : 'Set New PIN'}
+                  {forgotLoading ? 'Updating...' : 'Save New PIN'}
                 </button>
               </div>
             </form>

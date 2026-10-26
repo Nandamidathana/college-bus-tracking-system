@@ -19,8 +19,6 @@ import {
   FileSpreadsheet,
   AlertTriangle,
   X,
-  ChevronRight,
-  Phone,
   Menu,
 } from 'lucide-react';
 
@@ -96,35 +94,35 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row relative text-pastel-darkText dark:text-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
       {/* Floating Late Bus Alert Toast */}
       {delayAlerts.length > 0 && (
         <div className="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-auto animate-fadeIn">
           {delayAlerts.map((alert) => (
             <div
               key={alert.id}
-              className="p-4 rounded-3xl bg-red-950/90 border-2 border-red-500 shadow-2xl backdrop-blur-xl text-white space-y-2 relative"
+              className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-red-300 dark:border-red-900/60 shadow-lg text-slate-900 dark:text-slate-100 space-y-2 relative"
             >
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2 text-red-400 font-extrabold text-xs">
-                  <AlertTriangle className="w-4 h-4 animate-bounce shrink-0" />
-                  <span>LATE BUS ALERT (+{alert.delayMinutes}m)</span>
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-xs">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>BUS DELAY ALERT (+{alert.delayMinutes}m)</span>
                 </div>
                 <button
                   onClick={() => dismissAlert(alert.id)}
-                  className="text-slate-400 hover:text-white p-1"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div>
-                <div className="font-extrabold text-sm text-white">
-                  Bus {alert.busNumber} • {alert.routeName}
+                <div className="font-bold text-sm text-slate-900 dark:text-white">
+                  Bus #{alert.busNumber} &bull; {alert.routeName}
                 </div>
-                <div className="text-xs text-slate-300 mt-0.5 flex items-center justify-between">
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center justify-between">
                   <span>Driver: {alert.driverName}</span>
-                  <span className="font-mono text-[11px] text-red-300">{alert.timestamp}</span>
+                  <span className="font-mono text-[11px] text-red-600 dark:text-red-400">{alert.timestamp}</span>
                 </div>
               </div>
 
@@ -134,10 +132,10 @@ export const AdminLayout: React.FC = () => {
                     navigate(`/admin/live-map?focusBusId=${alert.busId}`);
                     dismissAlert(alert.id);
                   }}
-                  className="btn-pill-primary text-xs py-1.5 px-3 flex-1"
+                  className="w-full py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
                 >
-                  <Radio className="w-3.5 h-3.5 animate-pulse" />
-                  <span>Track Radar</span>
+                  <Radio className="w-3.5 h-3.5" />
+                  <span>Track on Map</span>
                 </button>
               </div>
             </div>
@@ -145,34 +143,34 @@ export const AdminLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile Top Header (Compact Bar with Drawer Toggle) */}
-      <div className="md:hidden flex items-center justify-between p-4 water-glass border-b border-black/5 dark:border-white/10 m-2 rounded-2xl shadow-sm z-30">
+      {/* Mobile Top Header */}
+      <div className="md:hidden flex items-center justify-between p-3.5 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-xs z-30">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow shadow-pill-teal">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-xs">
             <Shield className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="font-black text-xs tracking-tight">Admin Console</h2>
-            <span className="text-[10px] font-bold text-brand-700 dark:text-pastel-softTeal truncate block max-w-[150px]">
+            <h2 className="font-bold text-xs text-slate-900 dark:text-white leading-tight">Admin Console</h2>
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate block max-w-[150px]">
               {user?.college?.name || 'SRGEC Fleet'}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-white/70 dark:bg-white/10 border border-black/5 dark:border-white/10"
+            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
             title="Toggle theme"
           >
-            {theme === 'light' ? <Moon className="w-3.5 h-3.5 text-brand-600" /> : <Sun className="w-3.5 h-3.5 text-pastel-yellow" />}
+            {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
           </button>
           <button
             onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-            className="p-2 rounded-full bg-pastel-yellow text-pastel-darkText shadow-pill-yellow font-bold"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
             aria-label="Toggle navigation drawer"
           >
-            {mobileDrawerOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
@@ -180,29 +178,29 @@ export const AdminLayout: React.FC = () => {
       {/* Mobile Drawer Backdrop */}
       {mobileDrawerOpen && (
         <div
-          className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-xs"
           onClick={() => setMobileDrawerOpen(false)}
         />
       )}
 
       {/* Sidebar: Slide-out drawer on Mobile, Fixed column on Desktop */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 w-72 md:w-64 water-glass border-r border-black/5 dark:border-white/10 flex flex-col justify-between shrink-0 shadow-glass md:m-3 md:rounded-3xl transition-transform duration-300 ease-in-out ${
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between shrink-0 shadow-xs transition-transform duration-200 ease-in-out ${
           mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         <div>
           {/* Logo & College Banner */}
-          <div className="p-5 border-b border-black/5 dark:border-white/10 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow shadow-pill-teal shrink-0">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-xs shrink-0">
                 <Shield className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <h2 className="font-black text-sm tracking-tight truncate">
+                <h2 className="font-bold text-sm text-slate-900 dark:text-white tracking-tight truncate leading-tight">
                   Admin Console
                 </h2>
-                <span className="text-[11px] font-bold text-brand-700 dark:text-pastel-softTeal truncate block">
+                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate block">
                   {user?.college?.name || 'SRGEC Fleet'}
                 </span>
               </div>
@@ -211,25 +209,21 @@ export const AdminLayout: React.FC = () => {
             <div className="flex items-center gap-1">
               <button
                 onClick={toggleTheme}
-                className="hidden md:inline-flex p-2 rounded-full border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/10 hover:bg-white transition-all shadow-sm shrink-0"
+                className="hidden md:inline-flex p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                 title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
               >
-                {theme === 'light' ? (
-                  <Moon className="w-4 h-4 text-brand-600" />
-                ) : (
-                  <Sun className="w-4 h-4 text-pastel-yellow" />
-                )}
+                {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
               </button>
               <button
                 onClick={() => setMobileDrawerOpen(false)}
-                className="md:hidden p-2 rounded-full hover:bg-black/5"
+                className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Navigation Links with Yellow Active Pill */}
+          {/* Navigation Links */}
           <nav className="p-3 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -240,22 +234,22 @@ export const AdminLayout: React.FC = () => {
                   end={item.to === '/admin/dashboard'}
                   onClick={() => setMobileDrawerOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3.5 py-2.5 rounded-full text-xs font-black transition-all ${
+                    `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                       isActive
-                        ? 'bg-pastel-yellow text-pastel-darkText shadow-pill-yellow scale-[1.02]'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5'
+                        ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/60'
                     }`
                   }
                 >
                   <Icon className="w-4 h-4 shrink-0" />
                   <span>{item.label}</span>
                   {item.badge && (
-                    <span className="ml-auto text-[9px] px-2 py-0.5 rounded-full bg-pastel-mint text-brand-900 font-extrabold">
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-semibold">
                       {item.badge}
                     </span>
                   )}
                   {item.highlight && (
-                    <span className="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span className="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   )}
                 </NavLink>
               );
@@ -264,20 +258,20 @@ export const AdminLayout: React.FC = () => {
         </div>
 
         {/* User Info & Logout */}
-        <div className="p-4 border-t border-black/5 dark:border-white/10 space-y-3">
-          <div className="flex items-center gap-2.5 px-1">
-            <div className="w-8 h-8 rounded-full bg-brand-600 text-pastel-yellow flex items-center justify-center text-xs font-black">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="flex items-center gap-2.5 px-2 py-1">
+            <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold">
               {user?.name ? user.name[0] : 'A'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-black truncate">{user?.name}</p>
-              <p className="text-[10px] subtext-muted truncate font-mono">{user?.email}</p>
+              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{user?.name}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
             </div>
           </div>
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-extrabold border border-red-500/20 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 transition-all shadow-sm"
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -286,7 +280,7 @@ export const AdminLayout: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto min-h-screen p-3 md:p-6 pb-20">
+      <main className="flex-1 overflow-y-auto min-h-screen p-4 md:p-6 pb-20">
         <Outlet />
       </main>
     </div>

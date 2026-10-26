@@ -512,26 +512,30 @@ export const StudentDashboard: React.FC = () => {
   }, [liveLocation, busData, selectedBus, isLiveState]);
 
   return (
-    <div className="min-h-screen flex flex-col relative text-pastel-darkText dark:text-white">
+    <div className="min-h-screen flex flex-col relative bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
       <Navbar />
 
       {/* Arrival Toast */}
       {arrivalAlert && (
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 mt-3 w-full animate-fadeIn">
-          <div className="p-4 rounded-3xl bg-emerald-500/20 border-2 border-emerald-400 text-emerald-900 dark:text-emerald-100 flex items-center justify-between shadow-glass backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-3 w-full animate-fadeIn">
+          <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/30 flex items-center justify-center text-xl font-bold">
-                {arrivalAlert.type === 'BUS_ARRIVED' ? '🎓' : '🏁'}
+              <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                {arrivalAlert.type === 'BUS_ARRIVED' ? <School className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
               </div>
               <div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block">
                   {arrivalAlert.type === 'BUS_ARRIVED' ? 'College Gate Arrival' : 'Trip Completed'}
                 </span>
-                <p className="text-sm font-extrabold">{arrivalAlert.message}</p>
+                <p className="text-xs sm:text-sm font-semibold">{arrivalAlert.message}</p>
               </div>
             </div>
-            <button onClick={() => setArrivalAlert(null)} className="p-2 text-emerald-700 dark:text-emerald-300 hover:opacity-75">
-              <X className="w-5 h-5" />
+            <button
+              onClick={() => setArrivalAlert(null)}
+              className="p-1.5 rounded-lg text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+              aria-label="Dismiss alert"
+            >
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -539,21 +543,25 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Proximity 2 KM Alert Toast */}
       {activeAlert && (
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 mt-3 w-full animate-fadeIn">
-          <div className="p-4 rounded-3xl bg-amber-400/20 border-2 border-amber-400 text-amber-950 dark:text-amber-100 flex items-center justify-between shadow-glass backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-3 w-full animate-fadeIn">
+          <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-100 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-400/30 flex items-center justify-center text-amber-800 dark:text-amber-200">
+              <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 flex items-center justify-center shrink-0">
                 <Radio className="w-5 h-5 animate-pulse" />
               </div>
               <div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-amber-900 dark:text-amber-300 block">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300 block">
                   Bus Approaching (Within 2 KM)
                 </span>
-                <p className="text-sm font-extrabold">{activeAlert.message}</p>
+                <p className="text-xs sm:text-sm font-semibold">{activeAlert.message}</p>
               </div>
             </div>
-            <button onClick={() => setActiveAlert(null)} className="p-2 text-amber-800 dark:text-amber-200 hover:opacity-75">
-              <X className="w-5 h-5" />
+            <button
+              onClick={() => setActiveAlert(null)}
+              className="p-1.5 rounded-lg text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+              aria-label="Dismiss proximity alert"
+            >
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -569,22 +577,22 @@ export const StudentDashboard: React.FC = () => {
         }}
       />
 
-      {/* Main Container - Extra bottom padding for mobile floating nav */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-4 space-y-4 pb-28 sm:pb-14">
-        {/* TAB 1: HOME (Compact Header, Greeting, Main Bus Card, Boarding Stop Card, Small Map Preview) */}
+      {/* Main Container */}
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-4 space-y-4 pb-24 sm:pb-16">
+        {/* TAB 1: HOME */}
         {activeNavTab === 'HOME' && (
           <div className="space-y-4 animate-fadeIn">
             {/* 1. Compact Header */}
             <div className="flex items-center justify-between py-1">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow shadow-pill-teal">
+                <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs">
                   <Compass className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-xs font-black tracking-tight text-pastel-darkText dark:text-white block">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white block leading-tight">
                     College Bus Live
                   </span>
-                  <span className="text-[10px] font-bold text-brand-700 dark:text-pastel-softTeal">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                     {user?.college?.code || 'SRGEC'} Campus Transit
                   </span>
                 </div>
@@ -594,20 +602,22 @@ export const StudentDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowVolunteerModal(true)}
-                  className={`p-2 rounded-full border transition-all ${
+                  className={`p-2 rounded-lg border transition-colors ${
                     isVolunteerMode
-                      ? 'bg-amber-400 text-slate-900 border-amber-500 animate-pulse'
-                      : 'water-glass-subtle hover:bg-white text-amber-700 dark:text-pastel-yellow border-black/5 dark:border-white/10'
+                      ? 'bg-amber-500 text-white border-amber-600 animate-pulse'
+                      : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                   }`}
                   title="Volunteer GPS Broadcast"
+                  aria-label="Volunteer GPS Broadcast"
                 >
                   <Radio className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowProfileModal(true)}
-                  className="w-9 h-9 rounded-full bg-brand-600 text-pastel-yellow font-black text-xs flex items-center justify-center border-2 border-pastel-yellow/60 shadow-sm hover:scale-105 transition-transform"
+                  className="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-xs hover:bg-blue-700 transition-colors"
                   title="Profile & Settings"
+                  aria-label="Profile and Settings"
                 >
                   {user?.name ? user.name[0].toUpperCase() : 'S'}
                 </button>
@@ -615,38 +625,38 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* 2. Greeting */}
-            <div className="space-y-0.5 pt-1">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-pastel-darkText dark:text-white">
-                {greeting}, {user?.name || 'Student'} 👋
+            <div className="space-y-0.5 pt-0.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                {greeting}, {user?.name || 'Student'}
               </h1>
-              <p className="text-xs font-semibold subtext-muted">
-                Roll: <span className="font-mono font-bold text-brand-700 dark:text-pastel-softTeal">{student?.rollNumber || 'Enrolled'}</span> • {user?.college?.name || 'SRGEC Campus'}
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Roll: <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">{student?.rollNumber || 'Enrolled'}</span> &bull; {user?.college?.name || 'SRGEC Campus'}
               </p>
             </div>
 
             {/* 3. Main Bus Card */}
-            <div className="water-glass rounded-3xl p-5 sm:p-6 shadow-glass border border-white/80 space-y-4">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-600 text-pastel-yellow flex items-center justify-center font-black text-lg shadow-pill-teal shrink-0">
+                  <div className="w-11 h-11 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
                     #{selectedBus?.busNumber || '—'}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-base sm:text-lg font-black text-pastel-darkText dark:text-white">
+                      <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                         {selectedBus ? `Bus #${selectedBus.busNumber}` : 'Select a Bus'}
                       </h2>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
                         isLiveState
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300'
-                          : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isLiveState ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`}></span>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isLiveState ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
                         {isLiveState ? 'LIVE EN ROUTE' : 'IDLE / READY'}
                       </span>
                     </div>
-                    <p className="text-xs font-bold subtext-muted mt-0.5 truncate">
-                      Route: <span className="text-brand-700 dark:text-pastel-softTeal">{selectedBus?.route?.name || 'Transit Route'}</span>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 truncate">
+                      Route: <span className="text-slate-800 dark:text-slate-200 font-semibold">{selectedBus?.route?.name || 'Transit Route'}</span>
                     </p>
                   </div>
                 </div>
@@ -658,13 +668,13 @@ export const StudentDashboard: React.FC = () => {
                     setSelectedBusId(e.target.value);
                     autoSwitchedRef.current = false;
                   }}
-                  className="text-xs font-extrabold water-glass-input rounded-full px-3 py-1.5 cursor-pointer max-w-[125px] sm:max-w-[170px] truncate shrink-0"
+                  className="text-xs font-semibold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 cursor-pointer max-w-[125px] sm:max-w-[160px] truncate shrink-0 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500"
                   aria-label="Switch tracked bus"
                 >
                   <option value="">Switch Bus</option>
                   {buses.map((b) => (
                     <option key={b.id} value={b.id}>
-                      Bus {b.busNumber} {checkBusServesBoardingStop(b, boardingPoint) ? '⭐' : ''}
+                      Bus {b.busNumber} {checkBusServesBoardingStop(b, boardingPoint) ? '• Preferred' : ''}
                     </option>
                   ))}
                 </select>
@@ -672,24 +682,24 @@ export const StudentDashboard: React.FC = () => {
 
               {/* Telemetry Row (Live ETA, Distance, Speed) */}
               {isLiveState ? (
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-black/5 dark:border-white/10 text-center">
-                  <div className="p-2.5 rounded-2xl bg-pastel-cream/70 dark:bg-white/5">
-                    <span className="text-[10px] font-bold subtext-muted uppercase block">Arrival ETA</span>
-                    <span className="text-sm sm:text-base font-black text-brand-700 dark:text-pastel-yellow">~{displayEta} mins</span>
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60 text-center">
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700/50">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Arrival ETA</span>
+                    <span className="text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">~{displayEta} mins</span>
                   </div>
-                  <div className="p-2.5 rounded-2xl bg-pastel-mint/50 dark:bg-white/5">
-                    <span className="text-[10px] font-bold subtext-muted uppercase block">Distance</span>
-                    <span className="text-sm sm:text-base font-black text-brand-900 dark:text-pastel-softTeal">{displayDistance}</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700/50">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Distance</span>
+                    <span className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">{displayDistance}</span>
                   </div>
-                  <div className="p-2.5 rounded-2xl bg-pastel-cream/70 dark:bg-white/5">
-                    <span className="text-[10px] font-bold subtext-muted uppercase block">Speed</span>
-                    <span className="text-sm sm:text-base font-black text-pastel-darkText dark:text-white">
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-700/50">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Speed</span>
+                    <span className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">
                       {liveLocation?.speed ? Math.round(liveLocation.speed) : 0} km/h
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="pt-2 border-t border-black/5 dark:border-white/10 flex items-center justify-between text-xs subtext-muted font-bold">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
                   <span>Driver: {selectedBus?.assignedDriver?.driverName || 'Designated Driver'}</span>
                   <span>Trip starts on schedule</span>
                 </div>
@@ -697,15 +707,18 @@ export const StudentDashboard: React.FC = () => {
 
               {/* Route mismatch notice if applicable */}
               {selectedBusId && !isBusServingStudentStop && boardingPoint && (
-                <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-900 dark:text-red-200 text-xs flex items-center justify-between gap-2">
-                  <span className="font-bold">⚠️ Doesn't pass {boardingPoint.name}</span>
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>This bus does not stop at {boardingPoint.name}</span>
+                  </div>
                   {preferredBuses[0] && (
                     <button
                       type="button"
                       onClick={() => setSelectedBusId(preferredBuses[0].id)}
-                      className="text-xs font-black underline text-red-700 dark:text-red-300"
+                      className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0"
                     >
-                      Switch to Bus {preferredBuses[0].busNumber}
+                      Switch to Bus #{preferredBuses[0].busNumber}
                     </button>
                   )}
                 </div>
@@ -713,19 +726,19 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* 4. Boarding Stop Card */}
-            <div className="water-glass rounded-3xl p-4 sm:p-5 shadow-glass border border-white/80 flex items-center justify-between gap-3">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-xs flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-pastel-mint text-brand-900 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wider subtext-muted block">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                     Boarding Stop
                   </span>
-                  <span className="text-sm sm:text-base font-black text-pastel-darkText dark:text-white truncate block">
+                  <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate block">
                     {boardingPoint?.name || 'Not Configured'}
                   </span>
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                     Destination: {user?.college?.name || 'SRGEC Campus'}
                   </span>
                 </div>
@@ -733,27 +746,27 @@ export const StudentDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowProfileModal(true)}
-                className="btn-pill-yellow text-xs py-2 px-4 shrink-0 font-black shadow-pill-yellow"
+                className="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors shrink-0 shadow-xs"
               >
                 Edit
               </button>
             </div>
 
             {/* 5. Small Map Preview */}
-            <div className="water-glass rounded-3xl p-4 shadow-glass border border-white/80 space-y-3">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-xs space-y-3">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-xs font-black uppercase tracking-wider text-pastel-darkText dark:text-white">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
                     Live Location Preview
                   </span>
                 </div>
-                <span className="text-[11px] font-mono text-brand-700 dark:text-pastel-softTeal font-bold">
+                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold">
                   {isLiveState ? 'Broadcasting GPS' : 'Idle'}
                 </span>
               </div>
 
-              <div className="h-48 sm:h-56 rounded-2xl overflow-hidden shadow-inner border border-black/5 dark:border-white/10 relative">
+              <div className="h-48 sm:h-56 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 relative">
                 <BusMap
                   busLocation={resolvedBusLocation}
                   boardingPoint={boardingPoint || null}
@@ -778,7 +791,7 @@ export const StudentDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveNavTab('MAP')}
-                className="btn-pill-yellow w-full py-3 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-pill-yellow"
+                className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors shadow-xs"
               >
                 <span>Track Bus on Live Map</span>
                 <ArrowRight className="w-4 h-4" />
@@ -787,36 +800,37 @@ export const StudentDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 2: LIVE MAP (Full-Screen Map Focus + Floating Telemetry Sheet) */}
+        {/* TAB 2: LIVE MAP */}
         {activeNavTab === 'MAP' && (
           <div className="space-y-3 animate-fadeIn">
             {/* Compact Top Bar */}
-            <div className="flex items-center justify-between p-3.5 water-glass rounded-2xl shadow-sm">
+            <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
               <button
                 type="button"
                 onClick={() => setActiveNavTab('HOME')}
-                className="inline-flex items-center gap-1.5 text-xs font-black text-brand-700 dark:text-pastel-yellow hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
               >
-                <span>← Home</span>
+                <span>&larr; Home</span>
               </button>
               <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${isLiveState ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`}></span>
-                <span className="text-xs font-black">
-                  {selectedBus ? `Bus #${selectedBus.busNumber}` : 'Live Map'} • {isLiveState ? 'LIVE' : 'OFFLINE'}
+                <span className={`w-2 h-2 rounded-full ${isLiveState ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                  {selectedBus ? `Bus #${selectedBus.busNumber}` : 'Live Map'} &bull; {isLiveState ? 'LIVE' : 'OFFLINE'}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => selectedBusId && fetchBusStatus(selectedBusId)}
-                className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-brand-700 dark:text-pastel-yellow"
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
                 title="Refresh GPS"
+                aria-label="Refresh GPS"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
 
             {/* Map Canvas with Floating Telemetry Sheet */}
-            <div className="h-[calc(100vh-230px)] min-h-[460px] rounded-3xl overflow-hidden relative shadow-glass border border-white/80">
+            <div className="h-[calc(100vh-230px)] min-h-[460px] rounded-xl overflow-hidden relative border border-slate-200 dark:border-slate-700 shadow-xs">
               <BusMap
                 busLocation={resolvedBusLocation}
                 boardingPoint={boardingPoint || null}
@@ -839,24 +853,24 @@ export const StudentDashboard: React.FC = () => {
 
               {/* Floating Bottom Telemetry Card */}
               <div className="absolute bottom-3 left-3 right-3 z-[1000] pointer-events-auto">
-                <div className="water-glass rounded-2xl p-3.5 shadow-2xl border border-white/90 space-y-2">
+                <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl p-3.5 border border-slate-200 dark:border-slate-800 shadow-lg space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-pastel-darkText dark:text-white">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white">
                         Bus #{selectedBus?.busNumber || '—'}
                       </span>
-                      <span className="text-[10px] font-bold subtext-muted truncate max-w-[150px]">
-                        {selectedBus?.route?.name || 'Corridor'}
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[150px]">
+                        {selectedBus?.route?.name || 'Route'}
                       </span>
                     </div>
-                    <span className="text-xs font-black text-brand-700 dark:text-pastel-yellow">
-                      {isLiveState ? `ETA: ~${displayEta}m` : 'Ready / Offline'}
+                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                      {isLiveState ? `ETA: ~${displayEta}m` : 'Offline'}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300 pt-1 border-t border-black/5 dark:border-white/10">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-slate-600 dark:text-slate-300 pt-1 border-t border-slate-100 dark:border-slate-800">
                     <span>Speed: {liveLocation?.speed ? Math.round(liveLocation.speed) : 0} km/h</span>
                     <span>Distance: {displayDistance}</span>
-                    <span>Stop: {boardingPoint?.name || 'Configured'}</span>
+                    <span>Stop: {boardingPoint?.name || 'Assigned'}</span>
                   </div>
                 </div>
               </div>
@@ -864,29 +878,29 @@ export const StudentDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 3: ROUTES (Clean Searchable Routes List) */}
+        {/* TAB 3: ROUTES */}
         {activeNavTab === 'ROUTES' && (
           <div className="space-y-4 animate-fadeIn">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 water-glass rounded-3xl shadow-glass">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs">
               <div>
-                <h2 className="text-lg font-black text-pastel-darkText dark:text-white">College Bus Routes</h2>
-                <p className="text-xs subtext-muted font-semibold">Search routes and stop sequence</p>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">College Bus Routes</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Search routes and stop sequence</p>
               </div>
               <div className="relative max-w-xs w-full">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={routeSearch}
                   onChange={(e) => setRouteSearch(e.target.value)}
                   placeholder="Search route or stop..."
-                  className="w-full water-glass-input rounded-full pl-10 pr-4 py-2 text-xs font-bold"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3.5 py-1.5 text-xs font-medium text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
 
             <div className="space-y-3">
               {filteredRoutes.length === 0 ? (
-                <div className="p-8 text-center water-glass rounded-3xl subtext-muted text-xs font-bold">
+                <div className="p-8 text-center bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 text-xs font-medium">
                   No matching routes found. Try searching by village or station name.
                 </div>
               ) : (
@@ -897,21 +911,21 @@ export const StudentDashboard: React.FC = () => {
                   );
 
                   return (
-                    <div key={r.id} className="water-glass rounded-3xl p-5 shadow-glass border border-white/80 space-y-3">
+                    <div key={r.id} className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-xs space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="text-base font-black text-pastel-darkText dark:text-white capitalize">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white capitalize">
                               {r.name}
                             </h3>
                             {servesMyStop && (
-                              <span className="text-[10px] font-black bg-pastel-mint text-brand-900 px-2 py-0.5 rounded-full border border-brand-400">
-                                ⭐ Serves Your Stop
+                              <span className="text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
+                                Serves your stop
                               </span>
                             )}
                           </div>
-                          <p className="text-xs subtext-muted font-bold mt-0.5">
-                            {r.stops.length} Stops • Destination: {r.destination || user?.college?.name || 'Campus'}
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                            {r.stops.length} Stops &bull; Destination: {r.destination || user?.college?.name || 'Campus'}
                           </p>
                         </div>
 
@@ -925,10 +939,10 @@ export const StudentDashboard: React.FC = () => {
                                 setSelectedBusId(b.id);
                                 setActiveNavTab('HOME');
                               }}
-                              className={`px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                                 b.id === selectedBusId
-                                  ? 'bg-pastel-yellow text-pastel-darkText shadow-pill-yellow'
-                                  : 'bg-white/70 dark:bg-white/10 hover:bg-pastel-yellow/50'
+                                  ? 'bg-blue-600 text-white shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200'
                               }`}
                             >
                               Track #{b.busNumber}
@@ -941,13 +955,13 @@ export const StudentDashboard: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setExpandedRouteId(isExpanded ? null : r.id)}
-                        className="text-xs font-extrabold text-brand-700 dark:text-pastel-softTeal flex items-center gap-1 hover:underline pt-1"
+                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline pt-1"
                       >
-                        <span>{isExpanded ? 'Hide Stop Progression ▲' : `View ${r.stops.length} Stops Sequence ▼`}</span>
+                        <span>{isExpanded ? 'Hide Stop Sequence ▲' : `View ${r.stops.length} Stops Sequence ▼`}</span>
                       </button>
 
                       {isExpanded && (
-                        <div className="pt-3 border-t border-black/5 dark:border-white/10 space-y-2">
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-2">
                           {r.stops.map((stop, idx) => {
                             const isStudentStop =
                               stop.id === boardingPoint?.id ||
@@ -955,11 +969,11 @@ export const StudentDashboard: React.FC = () => {
 
                             return (
                               <div key={stop.id || idx} className="flex items-center gap-2.5 text-xs">
-                                <span className="w-5 h-5 rounded-full bg-pastel-cream text-brand-900 font-black text-[10px] flex items-center justify-center shrink-0">
+                                <span className="w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-[10px] flex items-center justify-center shrink-0">
                                   {idx + 1}
                                 </span>
-                                <span className={`font-bold ${isStudentStop ? 'text-brand-700 dark:text-pastel-yellow font-black' : ''}`}>
-                                  {stop.name} {isStudentStop ? '📍 (Your Boarding Point)' : ''}
+                                <span className={`font-medium ${isStudentStop ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
+                                  {stop.name} {isStudentStop ? '(Your Boarding Stop)' : ''}
                                 </span>
                               </div>
                             );
@@ -974,55 +988,55 @@ export const StudentDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 4: MY STOP (Boarding Stop Details, 2km Radar, and Stop Location Preview) */}
+        {/* TAB 4: MY STOP */}
         {activeNavTab === 'MY_STOP' && (
           <div className="space-y-4 animate-fadeIn">
-            <div className="p-5 sm:p-6 water-glass rounded-3xl shadow-glass border border-white/80 space-y-4">
+            <div className="p-5 sm:p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-600 text-pastel-yellow flex items-center justify-center text-xl shadow-pill-teal shrink-0">
-                    📍
+                  <div className="w-11 h-11 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider subtext-muted block">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                       Assigned Boarding Stop
                     </span>
-                    <h2 className="text-xl font-black text-pastel-darkText dark:text-white">
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                       {boardingPoint?.name || 'Not Configured'}
                     </h2>
-                    <p className="text-xs subtext-muted font-bold">
-                      Route: {selectedBus?.route?.name || student?.route?.name || 'College Transit Corridor'}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Route: {selectedBus?.route?.name || student?.route?.name || 'Campus Transit Route'}
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowProfileModal(true)}
-                  className="btn-pill-yellow text-xs py-2 px-4 font-black shadow-pill-yellow"
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors shadow-xs"
                 >
                   Edit Stop
                 </button>
               </div>
 
               {/* Proximity 2 KM Radar Details */}
-              <div className="p-4 rounded-2xl bg-pastel-cream/70 dark:bg-white/5 border border-amber-300 dark:border-white/10 space-y-1.5">
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 space-y-1">
                 <div className="flex items-center gap-2">
-                  <Radio className="w-4 h-4 text-amber-600 animate-pulse" />
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-pastel-yellow">
+                  <Radio className="w-4 h-4 text-blue-600 animate-pulse" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                     2 KM Proximity Alert Radar
                   </span>
                 </div>
-                <p className="text-xs subtext-muted font-medium">
-                  When your bus arrives within 2 km of {boardingPoint?.name || 'your station'}, automated arrival alerts trigger so you can walk to the boarding point on time.
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-normal leading-relaxed">
+                  When your bus arrives within 2 km of {boardingPoint?.name || 'your stop'}, automated arrival alerts trigger so you can walk to the boarding point on time.
                 </p>
               </div>
 
               {/* Station Map Preview */}
               <div className="space-y-2">
-                <span className="text-xs font-black uppercase tracking-wider subtext-muted block">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                   Station Map & 2KM Radar Radius
                 </span>
-                <div className="h-56 sm:h-64 rounded-2xl overflow-hidden shadow-inner border border-black/5 dark:border-white/10">
+                <div className="h-56 sm:h-64 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
                   <BusMap
                     busLocation={resolvedBusLocation}
                     boardingPoint={boardingPoint || null}
@@ -1058,22 +1072,26 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Volunteer Modal */}
       {showVolunteerModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="water-glass rounded-3xl sm:rounded-4xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Radio className="w-5 h-5 text-amber-500 animate-pulse" />
-                <h3 className="text-lg font-black text-pastel-darkText dark:text-white">Volunteer GPS Stream</h3>
+                <Radio className="w-5 h-5 text-blue-600 animate-pulse" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Volunteer GPS Stream</h3>
               </div>
-              <button onClick={() => setShowVolunteerModal(false)} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
+              <button
+                onClick={() => setShowVolunteerModal(false)}
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
+                aria-label="Close modal"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs subtext-muted leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
               Are you currently on board <strong>Bus #{selectedBus?.busNumber}</strong>? You can broadcast live GPS coordinates from your smartphone so classmates can track the bus even if the driver's phone is discharged or offline.
             </p>
             {volunteerMsg && (
-              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 text-xs font-bold border border-amber-300">
+              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-200 text-xs font-medium border border-blue-200 dark:border-blue-800">
                 {volunteerMsg}
               </div>
             )}
@@ -1084,7 +1102,11 @@ export const StudentDashboard: React.FC = () => {
                   setIsVolunteerMode(!isVolunteerMode);
                   setShowVolunteerModal(false);
                 }}
-                className={isVolunteerMode ? 'btn-pill-primary w-full' : 'btn-pill-yellow w-full'}
+                className={`w-full py-2.5 px-4 rounded-lg font-semibold text-sm transition-colors shadow-xs ${
+                  isVolunteerMode
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
                 {isVolunteerMode ? 'Stop Volunteering' : 'Start Live Broadcasting'}
               </button>

@@ -281,43 +281,44 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="water-glass rounded-3xl sm:rounded-4xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 my-6 relative border border-white/80">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-xl max-w-xl w-full p-6 sm:p-8 shadow-xl space-y-5 my-6 relative border border-slate-200 dark:border-slate-700">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-slate-500 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          aria-label="Close modal"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
-        <div className="flex items-center gap-3.5 pr-8">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-pastel-yellow shadow-pill-teal shrink-0">
-            <Compass className="w-6 h-6" />
+        <div className="flex items-center gap-3 pr-8">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs shrink-0">
+            <Compass className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-black text-pastel-darkText dark:text-white tracking-tight">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
               Student Profile & Boarding Stop
             </h2>
-            <p className="text-xs subtext-muted font-semibold">
-              Configure your exact pickup location for 2km push alerts and accurate bus ETAs.
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Configure your exact pickup location for 2 km proximity alerts and live bus ETAs.
             </p>
           </div>
         </div>
 
         {/* Messages */}
         {successMsg && (
-          <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-900 dark:text-emerald-100 text-xs font-bold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-300 shrink-0" />
+          <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {errorMsg && (
-          <div className="p-3.5 rounded-2xl bg-red-500/20 border border-red-500/50 text-red-900 dark:text-red-100 text-xs font-bold flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-300 shrink-0" />
+          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-800 dark:text-red-200 text-xs font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
@@ -326,43 +327,43 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           /* View Mode */
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10">
-                <span className="text-[10px] font-bold uppercase tracking-wider subtext-muted block">
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                   Student Name
                 </span>
-                <span className="text-sm sm:text-base font-black text-pastel-darkText dark:text-white mt-0.5 block truncate">
+                <span className="text-sm font-bold text-slate-900 dark:text-white mt-0.5 block truncate">
                   {user?.name}
                 </span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-black/5 dark:border-white/10">
-                <span className="text-[10px] font-bold uppercase tracking-wider subtext-muted block">
+              <div className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                   Roll Number
                 </span>
-                <span className="text-sm sm:text-base font-mono font-bold text-brand-700 dark:text-pastel-softTeal mt-0.5 block">
+                <span className="text-sm font-mono font-semibold text-blue-600 dark:text-blue-400 mt-0.5 block">
                   {student.rollNumber}
                 </span>
               </div>
             </div>
 
             {/* Boarding Point Highlight Box */}
-            <div className="p-5 rounded-3xl bg-pastel-cream/70 dark:bg-brand-900/40 border border-amber-300 dark:border-white/10 space-y-2">
+            <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-pastel-yellow flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   Your Boarding Stop
                 </span>
-                <span className="text-[10px] font-black bg-pastel-yellow text-pastel-darkText px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-semibold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md">
                   2 KM Alert Anchor
                 </span>
               </div>
 
-              <h4 className="text-lg font-black text-pastel-darkText dark:text-white">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 {student.boardingPoint?.name || 'Not Configured'}
-              </h4>
+              </h3>
 
               {student.boardingPoint && (
-                <div className="text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
+                <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
                   GPS: {student.boardingPoint.latitude.toFixed(5)}, {student.boardingPoint.longitude.toFixed(5)}
                 </div>
               )}
@@ -371,10 +372,10 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="btn-pill-primary w-full gap-2 text-sm"
+              className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors shadow-xs"
             >
               <Edit2 className="w-4 h-4" />
-              Change Stop Location / Pin on Map
+              <span>Change Stop Location / Pin on Map</span>
             </button>
           </div>
         ) : (
@@ -382,43 +383,43 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider subtext-muted mb-1">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Full Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full water-glass-input rounded-xl px-3.5 py-2 text-sm font-bold"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-900 dark:text-white"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider subtext-muted mb-1">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Village / Area
                 </label>
                 <input
                   type="text"
                   value={village}
                   onChange={(e) => setVillage(e.target.value)}
-                  className="w-full water-glass-input rounded-xl px-3.5 py-2 text-sm font-bold"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-slate-900 dark:text-white"
                   required
                 />
               </div>
             </div>
 
             {/* Boarding Point Search & Map */}
-            <div className="p-4 rounded-3xl bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 space-y-3">
+            <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-black uppercase tracking-wider text-brand-700 dark:text-pastel-softTeal flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5" /> Stop / Hostel Name
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Stop / Hostel Name
                 </label>
                 <button
                   type="button"
                   onClick={handleDetectGPS}
                   disabled={detectingGps}
-                  className="text-[11px] font-bold bg-pastel-mint text-brand-900 border border-brand-400 px-2.5 py-1 rounded-full flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                 >
                   <Crosshair className="w-3.5 h-3.5" />
                   {detectingGps ? 'Locating...' : 'Use Device GPS'}
@@ -432,24 +433,24 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   value={boardingPointName}
                   onChange={(e) => handleLocationInputChange(e.target.value)}
                   placeholder="Type any place (e.g. Himaja Boys Hostel, Gudivada)..."
-                  className="w-full water-glass-input rounded-xl px-3.5 py-2.5 pr-10 text-sm font-bold"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 pr-9 text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400"
                   required
                 />
-                <div className="absolute right-3 top-3 text-slate-400">
-                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin text-brand-600" /> : <Search className="w-4 h-4" />}
+                <div className="absolute right-3 top-2.5 text-slate-400">
+                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> : <Search className="w-4 h-4" />}
                 </div>
 
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white dark:bg-brand-900 border border-black/10 dark:border-white/15 rounded-xl shadow-2xl overflow-hidden max-h-44 overflow-y-auto divide-y divide-black/5 dark:divide-white/10">
+                  <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl overflow-hidden max-h-44 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700">
                     {suggestions.map((s, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => handleSelectSuggestion(s)}
-                        className="w-full text-left px-3.5 py-2 hover:bg-pastel-mint/50 text-xs text-pastel-darkText dark:text-white transition-colors flex items-center justify-between"
+                        className="w-full text-left px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs text-slate-900 dark:text-white transition-colors flex items-center justify-between"
                       >
-                        <span className="font-semibold truncate">{s.displayName}</span>
-                        <span className="text-[10px] font-mono text-brand-600 shrink-0 ml-2">
+                        <span className="font-medium truncate">{s.displayName}</span>
+                        <span className="text-[10px] font-mono text-slate-500 shrink-0 ml-2">
                           {s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}
                         </span>
                       </button>
@@ -465,7 +466,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                     key={idx}
                     type="button"
                     onClick={() => handleQuickChipSelect(chip)}
-                    className="text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-black/10 dark:border-white/10 bg-white/70 dark:bg-white/5 hover:bg-pastel-mint text-pastel-darkText dark:text-white transition-colors"
+                    className="text-[11px] font-medium px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
                   >
                     {chip.name.split(',')[0]}
                   </button>
@@ -473,7 +474,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               </div>
 
               {/* Map Pin-Dropper */}
-              <div className="h-44 sm:h-52 w-full rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 shadow-inner">
+              <div className="h-44 sm:h-52 w-full rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
                 <MapContainer
                   center={currentCoords}
                   zoom={16}
@@ -493,28 +494,28 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="btn-pill-secondary flex-1 text-xs"
+                className="flex-1 py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="btn-pill-primary flex-1 text-xs gap-1.5"
+                className="flex-1 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-60"
               >
                 {saving ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
+                    <span>Saving...</span>
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Save Coordinates
+                    <span>Save Coordinates</span>
                   </>
                 )}
               </button>
