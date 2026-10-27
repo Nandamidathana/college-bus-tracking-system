@@ -3,15 +3,32 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
-// Pages
-import { LandingPage } from './pages/LandingPage';
-
+// 12 Reference Screens
+import { SplashScreen } from './pages/student/SplashScreen';
 import { StudentLogin } from './pages/student/StudentLogin';
 import { StudentRegister } from './pages/student/StudentRegister';
 import { StudentDashboard } from './pages/student/StudentDashboard';
+import { LiveTrackingScreen } from './pages/student/LiveTrackingScreen';
+import { RoutesScreen } from './pages/student/RoutesScreen';
+import { SeatAvailabilityScreen } from './pages/student/SeatAvailabilityScreen';
+import { NotificationsScreen } from './pages/student/NotificationsScreen';
+import { SosEmergencyScreen } from './pages/student/SosEmergencyScreen';
+import { ParentTrackingScreen } from './pages/student/ParentTrackingScreen';
+import { ProfileScreen } from './pages/student/ProfileScreen';
+import { SettingsScreen } from './pages/student/SettingsScreen';
+import { BusDetailsScreen } from './pages/student/BusDetailsScreen';
+import { ScreensGalleryPage } from './pages/student/ScreensGalleryPage';
+
+// Multi-Role & Public Pages
+import { LandingPage } from './pages/LandingPage';
+import { GuardianTrackingPage } from './pages/public/GuardianTrackingPage';
+
+// Driver Pages
 import { DriverLogin } from './pages/driver/DriverLogin';
 import { DriverRegister } from './pages/driver/DriverRegister';
 import { DriverDashboard } from './pages/driver/DriverDashboard';
+
+// Admin Pages
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { AdminLayout } from './pages/admin/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -23,7 +40,6 @@ import { AdminStudents } from './pages/admin/AdminStudents';
 import { AdminTrips } from './pages/admin/AdminTrips';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { AdminArrivals } from './pages/admin/AdminArrivals';
-import { GuardianTrackingPage } from './pages/public/GuardianTrackingPage';
 
 // Protected Route Guard with strict role authorization
 const ProtectedRoute: React.FC<{
@@ -41,11 +57,10 @@ const ProtectedRoute: React.FC<{
   }
 
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/student/login" replace />;
   }
 
   if (!allowedRoles.includes(user.role)) {
-    // Redirect to user's authorized role dashboard
     if (user.role === 'STUDENT') return <Navigate to="/student/dashboard" replace />;
     if (user.role === 'DRIVER') return <Navigate to="/driver/dashboard" replace />;
     if (user.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
@@ -61,13 +76,19 @@ export const App: React.FC = () => {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public Landing & Gateway */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/track/bus/:busId" element={<GuardianTrackingPage />} />
+            {/* Screen 1: Splash Screen (Default Home Route) */}
+            <Route path="/" element={<SplashScreen />} />
+            <Route path="/splash" element={<SplashScreen />} />
 
-            {/* Student Routes */}
+            {/* Screen 2: Login Screen */}
+            <Route path="/login" element={<StudentLogin />} />
             <Route path="/student/login" element={<StudentLogin />} />
             <Route path="/student/register" element={<StudentRegister />} />
+
+            {/* 12-Screen Overview / Gallery Mode */}
+            <Route path="/student/gallery" element={<ScreensGalleryPage />} />
+
+            {/* Screen 3: Student Dashboard */}
             <Route
               path="/student/dashboard"
               element={
@@ -76,6 +97,118 @@ export const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+
+            {/* Screen 4: Live Tracking */}
+            <Route
+              path="/student/live-tracking"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <LiveTrackingScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Screen 5: Bus Routes */}
+            <Route
+              path="/student/routes"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <RoutesScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Screen 6: Seat Availability */}
+            <Route
+              path="/student/seat-availability"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <SeatAvailabilityScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Screen 7: Notifications */}
+            <Route
+              path="/student/notifications"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <NotificationsScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Screen 8: SOS / Emergency */}
+            <Route
+              path="/student/sos"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <SosEmergencyScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/emergency"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <SosEmergencyScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Screen 9: Parent Tracking */}
+            <Route
+              path="/student/parent-tracking"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <ParentTrackingScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Screen 10: Profile */}
+            <Route
+              path="/student/profile"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <ProfileScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Screen 11: Settings */}
+            <Route
+              path="/student/settings"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <SettingsScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Screen 12: Bus Details */}
+            <Route
+              path="/student/bus-details"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <BusDetailsScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/bus/:busId"
+              element={
+                <ProtectedRoute allowedRoles={['STUDENT']}>
+                  <BusDetailsScreen />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Public Parent Guardian Live Tracking Endpoint */}
+            <Route path="/track/bus/:busId" element={<GuardianTrackingPage />} />
+
+            {/* Classic Multi-Role Landing Page */}
+            <Route path="/landing" element={<LandingPage />} />
 
             {/* Driver Routes */}
             <Route path="/driver/login" element={<DriverLogin />} />
@@ -121,4 +254,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-

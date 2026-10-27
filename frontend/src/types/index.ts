@@ -44,6 +44,10 @@ export interface Bus {
   id: string;
   busNumber: string;
   capacity: number;
+  currentOccupancy?: number;
+  occupancyStatus?: string;
+  occupancyUpdatedAt?: string;
+  occupancyUpdatedBy?: string;
   collegeId: string;
   routeId?: string;
   assignedDriverId?: string;
@@ -128,6 +132,14 @@ export interface AuthUser {
   college?: College;
   student?: Student;
   driver?: Driver;
+  rollNumber?: string;
+  busId?: string;
+  busNumber?: string;
+  routeId?: string;
+  routeName?: string;
+  boardingPointId?: string;
+  boardingPoint?: string;
+  collegeName?: string;
 }
 
 export interface BusLocationUpdate {

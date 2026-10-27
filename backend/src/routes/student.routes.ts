@@ -1040,4 +1040,133 @@ router.put('/notifications/read-all', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/student/incidents - Authorized student incident/SOS reporting
+router.post('/incidents', async (req: Request, res: Response) => {
+  try {
+    const { busId, type = 'SOS', severity = 'HIGH', description, delayMinutes = 0, latitude, longitude, accuracy } = req.body;
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+      include: { user: true, college: true },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    let targetBusId = busId;
+    if (!targetBusId) {
+      if (student.routeId) {
+        const busOnRoute = await prisma.bus.findFirst({
+          where: { routeId: student.routeId, collegeId: student.collegeId },
+        });
+        if (busOnRoute) targetBusId = busOnRoute.id;
+      }
+      if (!targetBusId) {
+        const firstBus = await prisma.bus.findFirst({ where: { collegeId: student.collegeId } });
+        if (firstBus) targetBusId = firstBus.id;
+      }
+    }
+
+    if (!targetBusId) {
+      return res.status(400).json({ error: 'No bus found for incident reporting.' });
+    }
+
+    const bus = await prisma.bus.findUnique({
+      where: { id: targetBusId },
+      include: {
+        assignedDriver: true,
+        trips: { where: { status: 'IN_PROGRESS' }, take: 1, orderBy: { startTime: 'desc' } },
+      },
+    });
+
+    if (!bus) return res.status(404).json({ error: 'Bus not found.' });
+
+    let driverId = bus.assignedDriverId || bus.assignedDriver?.id;
+    if (!driverId && bus.trips && bus.trips.length > 0) {
+      driverId = bus.trips[0].driverId;
+    }
+    if (!driverId) {
+      const fallbackDriver = await prisma.driver.findFirst({ where: { collegeId: student.collegeId } });
+      if (fallbackDriver) driverId = fallbackDriver.id;
+    }
+
+    if (!driverId) {
+      return res.status(400).json({ error: 'No driver associated with bus or college.' });
+    }
+
+    const activeTrip = bus.trips && bus.trips.length > 0 ? bus.trips[0] : null;
+
+    const incident = await prisma.incident.create({
+      data: {
+        collegeId: student.collegeId,
+        busId: bus.id,
+        driverId: driverId,
+        tripId: activeTrip?.id || null,
+        type: String(type).toUpperCase(),
+        severity: type === 'SOS' ? 'CRITICAL' : (severity || 'MEDIUM'),
+        status: 'OPEN',
+        description: description || (type === 'SOS' ? `Emergency SOS triggered by ${student.user.name} (${student.rollNumber})` : 'Incident reported by student'),
+        delayMinutes: Number(delayMinutes) || 0,
+        latitude: latitude ? Number(latitude) : null,
+        longitude: longitude ? Number(longitude) : null,
+        accuracy: accuracy ? Number(accuracy) : 5.0,
+      },
+    });
+
+    const io = req.app.get('io');
+    const incidentPayload = {
+      id: incident.id,
+      collegeId: student.collegeId,
+      busId: bus.id,
+      busNumber: bus.busNumber,
+      studentName: student.user.name,
+      studentRoll: student.rollNumber,
+      type: incident.type,
+      severity: incident.severity,
+      status: incident.status,
+      description: incident.description,
+      delayMinutes: incident.delayMinutes,
+      latitude: incident.latitude,
+      longitude: incident.longitude,
+      reportedAt: incident.reportedAt.toISOString(),
+    };
+
+    if (io) {
+      io.to(`college_${student.collegeId}`).emit('admin:incident:new', incidentPayload);
+      if (incident.type === 'SOS' || incident.severity === 'CRITICAL') {
+        io.to(`college_${student.collegeId}`).emit('admin:incident:emergency', incidentPayload);
+      }
+      io.to(`bus_${bus.id}`).emit('bus:incident:alert', incidentPayload);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Incident reported successfully. Emergency dispatchers alerted.',
+      incident,
+    });
+  } catch (error: any) {
+    console.error('Error reporting student incident:', error);
+    return res.status(500).json({ error: error.message || 'Failed to report incident.' });
+  }
+});
+
+// GET /api/student/incidents - List active incidents for student's college
+router.get('/incidents', async (req: Request, res: Response) => {
+  try {
+    const student = await prisma.student.findFirst({
+      where: { userId: req.user!.userId },
+    });
+    if (!student) return res.status(404).json({ error: 'Student not found.' });
+
+    const incidents = await prisma.incident.findMany({
+      where: { collegeId: student.collegeId },
+      orderBy: { reportedAt: 'desc' },
+      take: 15,
+      include: { bus: true },
+    });
+
+    return res.json({ success: true, incidents });
+  } catch (error: any) {
+    console.error('Error fetching student incidents:', error);
+    return res.status(500).json({ error: 'Failed to fetch incidents.' });
+  }
+});
+
 export default router;

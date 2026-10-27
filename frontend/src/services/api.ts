@@ -123,6 +123,16 @@ export const studentApi = {
   revokeGuardianLink: (id: string) => api.delete(`/student/guardian-links/${id}`),
   markNotificationRead: (id: string) => api.put(`/student/notifications/${id}/read`),
   markAllNotificationsRead: () => api.put('/student/notifications/read-all'),
+  reportIncident: (data: {
+    busId?: string;
+    type: string;
+    severity?: string;
+    description?: string;
+    delayMinutes?: number;
+    latitude?: number;
+    longitude?: number;
+  }) => api.post('/student/incidents', data),
+  getIncidents: () => api.get('/student/incidents'),
 };
 
 export const driverApi = {
