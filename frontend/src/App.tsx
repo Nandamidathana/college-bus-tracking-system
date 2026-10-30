@@ -17,7 +17,6 @@ import { ParentTrackingScreen } from './pages/student/ParentTrackingScreen';
 import { ProfileScreen } from './pages/student/ProfileScreen';
 import { SettingsScreen } from './pages/student/SettingsScreen';
 import { BusDetailsScreen } from './pages/student/BusDetailsScreen';
-import { ScreensGalleryPage } from './pages/student/ScreensGalleryPage';
 
 // Multi-Role & Public Pages
 import { LandingPage } from './pages/LandingPage';
@@ -85,8 +84,6 @@ export const App: React.FC = () => {
             <Route path="/student/login" element={<StudentLogin />} />
             <Route path="/student/register" element={<StudentRegister />} />
 
-            {/* 12-Screen Overview / Gallery Mode */}
-            <Route path="/student/gallery" element={<ScreensGalleryPage />} />
 
             {/* Screen 3: Student Dashboard */}
             <Route
