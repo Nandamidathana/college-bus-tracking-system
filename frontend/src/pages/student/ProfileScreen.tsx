@@ -16,6 +16,9 @@ import {
   ChevronRight,
   LogOut,
   Building,
+  Navigation,
+  Shield,
+  Repeat,
 } from 'lucide-react';
 
 export const ProfileScreen: React.FC = () => {
@@ -164,6 +167,35 @@ export const ProfileScreen: React.FC = () => {
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </button>
+
+            {/* Switch Portal (Driver / Admin) */}
+            <div className="w-full flex items-center justify-between p-3 rounded-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 flex items-center justify-center">
+                  <Repeat className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                    Switch Portal
+                  </span>
+                  <span className="text-[10px] text-slate-400">Driver & Admin console access</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => navigate('/driver/login')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 text-[11px] font-bold border border-emerald-200 dark:border-emerald-800 hover:scale-105 transition-all"
+                >
+                  Driver
+                </button>
+                <button
+                  onClick={() => navigate('/admin/login')}
+                  className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 text-[11px] font-bold border border-slate-200 dark:border-slate-700 hover:scale-105 transition-all"
+                >
+                  Admin
+                </button>
+              </div>
+            </div>
 
             {/* About App */}
             <button

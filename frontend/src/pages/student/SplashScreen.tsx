@@ -52,6 +52,33 @@ export const SplashScreen: React.FC = () => {
               Login
             </Link>
           </div>
+
+          {/* Quick Role Portal Buttons */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-[11px] font-semibold text-slate-400 mb-2">
+              Select Portal Login
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <Link
+                to="/student/login"
+                className="px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-bold border border-blue-200 dark:border-blue-800 text-[11px] active:scale-95 transition-all"
+              >
+                🎓 Student
+              </Link>
+              <Link
+                to="/driver/login"
+                className="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800 text-[11px] active:scale-95 transition-all"
+              >
+                🚌 Driver
+              </Link>
+              <Link
+                to="/admin/login"
+                className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 text-[11px] active:scale-95 transition-all"
+              >
+                🛡️ Admin
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </MobileAppLayout>
