@@ -1,8 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M8 6v6"/>
-  <path d="M15 6v6"/>
-  <path d="M2 12h19.6"/>
-  <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.6-.4-1-1-1H3c-.6 0-1 .4-1 1 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/>
-  <circle cx="7" cy="18" r="2"/>
-  <circle cx="17" cy="18" r="2"/>
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 800 420"
+     width="800" height="420">
+
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E8EFF8"/>
+    </linearGradient>
+    <linearGradient id="window" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#C4F1FF"/>
+      <stop offset="100%" stop-color="#60A5D8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="420" rx="18" fill="#EAF1F8"/>
+
+  <!-- Road -->
+  <rect x="0" y="350" width="800" height="70" fill="#CBD5E1"/>
+  <path d="M0 350 H800" stroke="#64748B" stroke-width="4"/>
+
+  <!-- Bus body -->
+  <path d="M85 180 Q95 110 160 110
+           H600 Q665 110 700 185
+           L745 300 V340 H85Z"
+        fill="url(#body)"
+        stroke="#173D7C" stroke-width="6"/>
+
+  <!-- Windows -->
+  <path d="M100 175 Q115 130 165 130
+           H590 Q640 130 675 180
+           H100Z" fill="#102D5C"/>
+
+  <g fill="url(#window)" stroke="#FFFFFF" stroke-width="4">
+    <rect x="115" y="140" width="65" height="52" rx="5"/>
+    <rect x="188" y="140" width="65" height="52" rx="5"/>
+    <rect x="261" y="140" width="65" height="52" rx="5"/>
+    <rect x="334" y="140" width="65" height="52" rx="5"/>
+    <rect x="407" y="140" width="65" height="52" rx="5"/>
+    <rect x="480" y="140" width="65" height="52" rx="5"/>
+    <rect x="553" y="140" width="65" height="52" rx="5"/>
+  </g>
+
+  <!-- Lower blue body -->
+  <path d="M85 215 H745 V340 H85Z" fill="#173D7C"/>
+
+  <!-- Golden decorative stripe -->
+  <path d="M85 255 Q400 280 745 245"
+        fill="none" stroke="#D6A64E" stroke-width="10"/>
+
+  <path d="M85 275 H745"
+        fill="none" stroke="#FFFFFF" stroke-width="3"/>
+
+  <!-- College branding -->
+  <text x="400" y="235"
+        font-family="Arial" font-size="53"
+        font-weight="bold" text-anchor="middle"
+        fill="#173D7C">SRGEC</text>
+
+  <text x="400" y="258"
+        font-family="Arial" font-size="15"
+        font-weight="bold" text-anchor="middle"
+        fill="#173D7C">
+    SESHADRI RAO GUDLAVALLERU ENGINEERING COLLEGE
+  </text>
+
+  <!-- Bus label -->
+  <text x="630" y="315"
+        font-family="Arial" font-size="22"
+        font-weight="bold" text-anchor="middle"
+        fill="#FFFFFF">COLLEGE BUS</text>
+
+  <!-- Wheels -->
+  <g fill="#111827" stroke="#94A3B8" stroke-width="8">
+    <circle cx="210" cy="340" r="39"/>
+    <circle cx="610" cy="340" r="39"/>
+  </g>
+
+  <g fill="#CBD5E1">
+    <circle cx="210" cy="340" r="17"/>
+    <circle cx="610" cy="340" r="17"/>
+  </g>
+
 </svg>
